@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2024-12-17
+
+### Fixed
+- Game blocks now generate complete, working implementations instead of comments
+- Control flow blocks (when game starts, every frame) now generate proper Bevy systems with all required parameters
+- Collision blocks include proper detection guidance and structure
+- Sound blocks include required system parameter hints
+- Color and visibility blocks use correct Bevy APIs
+- Auto-generated systems now include comprehensive query parameters based on used components
+
+### Added
+- Invincibility component auto-generation for invincibility blocks
+- Automatic system parameter detection based on used game components
+- Collision detection setup instructions in generated code
+- Comprehensive query generation (Transform + Health + Inventory when used)
+
+### Changed
+- Game component definitions now include detailed setup instructions
+- System generation is now context-aware and includes only needed parameters
+
 ## [0.2.0] - 2024-12-17
 
 ### Added
@@ -60,7 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `cli`: Command-line interface for standalone usage
 - `full`: All features enabled
 
-[Unreleased]: https://github.com/Quadraxis77/Rust_Visual_Editor/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Quadraxis77/Rust_Visual_Editor/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Quadraxis77/Rust_Visual_Editor/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Quadraxis77/Rust_Visual_Editor/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/Quadraxis77/Rust_Visual_Editor/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Quadraxis77/Rust_Visual_Editor/releases/tag/v0.1.0

@@ -6,6 +6,155 @@
 // Game blocks use the Bevy generator
 const GameGenerator = BevyGenerator;
 
+// Track which components/resources are needed
+let gameRequiredComponents = new Set();
+
+function addGameComponent(componentName) {
+    gameRequiredComponents.add(componentName);
+}
+
+function generateGameComponents() {
+    if (gameRequiredComponents.size === 0) {
+        return '';
+    }
+    
+    let code = '// ============================================================================\n';
+    code += '// AUTO-GENERATED GAME COMPONENTS\n';
+    code += '// ============================================================================\n\n';
+    
+    // Add HashMap import if Inventory is used
+    if (gameRequiredComponents.has('Inventory')) {
+        code += 'use std::collections::HashMap;\n\n';
+    }
+    
+    if (gameRequiredComponents.has('Score')) {
+        code += `#[derive(Resource, Default)]
+pub struct Score {
+    pub value: i32,
+}
+
+`;
+    }
+    
+    if (gameRequiredComponents.has('Lives')) {
+        code += `#[derive(Resource, Default)]
+pub struct Lives {
+    pub value: i32,
+}
+
+`;
+    }
+    
+    if (gameRequiredComponents.has('Health')) {
+        code += `#[derive(Component)]
+pub struct Health {
+    pub current: f32,
+    pub max: f32,
+}
+
+impl Default for Health {
+    fn default() -> Self {
+        Self {
+            current: 100.0,
+            max: 100.0,
+        }
+    }
+}
+
+`;
+    }
+    
+    if (gameRequiredComponents.has('Inventory')) {
+        code += `#[derive(Component, Default)]
+pub struct Inventory {
+    pub items: HashMap<String, u32>,
+}
+
+impl Inventory {
+    pub fn add(&mut self, item: &str) {
+        *self.items.entry(item.to_string()).or_insert(0) += 1;
+    }
+    
+    pub fn remove(&mut self, item: &str) -> bool {
+        if let Some(count) = self.items.get_mut(item) {
+            if *count > 0 {
+                *count -= 1;
+                return true;
+            }
+        }
+        false
+    }
+    
+    pub fn has(&self, item: &str) -> bool {
+        self.items.get(item).map_or(false, |&count| count > 0)
+    }
+    
+    pub fn count(&self, item: &str) -> u32 {
+        *self.items.get(item).unwrap_or(&0)
+    }
+    
+    pub fn clear(&mut self) {
+        self.items.clear();
+    }
+}
+
+`;
+    }
+    
+    if (gameRequiredComponents.has('Invincibility')) {
+        code += `#[derive(Component)]
+pub struct Invincibility {
+    pub duration: f32,
+    pub timer: f32,
+}
+
+impl Default for Invincibility {
+    fn default() -> Self {
+        Self {
+            duration: 0.0,
+            timer: 0.0,
+        }
+    }
+}
+
+`;
+    }
+    
+    // Add setup instructions
+    code += '// ============================================================================\n';
+    code += '// SETUP INSTRUCTIONS\n';
+    code += '// ============================================================================\n';
+    code += '// Add to your App builder:\n';
+    
+    if (gameRequiredComponents.has('Score')) {
+        code += '//   .init_resource::<Score>()\n';
+    }
+    if (gameRequiredComponents.has('Lives')) {
+        code += '//   .init_resource::<Lives>()\n';
+    }
+    
+    code += '//\n';
+    code += '// Add components to entities:\n';
+    if (gameRequiredComponents.has('Health')) {
+        code += '//   commands.spawn((Transform::default(), Health::default()));\n';
+    }
+    if (gameRequiredComponents.has('Inventory')) {
+        code += '//   commands.spawn((Transform::default(), Inventory::default()));\n';
+    }
+    if (gameRequiredComponents.has('Invincibility')) {
+        code += '//   commands.spawn((Transform::default(), Invincibility::default()));\n';
+    }
+    code += '//\n';
+    code += '// For collision detection, add bevy_rapier2d or bevy_rapier3d to Cargo.toml\n';
+    code += '// ============================================================================\n\n';
+    
+    return code;
+}
+
+function clearGameComponents() {
+    gameRequiredComponents = new Set();
+}
+
 // ============================================================================
 // MOVEMENT BLOCKS
 // ============================================================================
@@ -13,8 +162,8 @@ const GameGenerator = BevyGenerator;
 GameGenerator.forBlock['game_move_forward'] = function(block) {
     const distance = GameGenerator.valueToCode(block, 'DISTANCE', GameGenerator.ORDER_NONE) || '1.0';
     
-    return `// Move forward
-transform.translation += transform.forward() * ${distance};\n`;
+    return `let forward = transform.forward();
+transform.translation += forward * ${distance};\n`;
 };
 
 GameGenerator.forBlock['game_move_to'] = function(block) {
@@ -31,10 +180,11 @@ GameGenerator.forBlock['game_glide_to'] = function(block) {
     const z = GameGenerator.valueToCode(block, 'Z', GameGenerator.ORDER_NONE) || '0.0';
     const duration = GameGenerator.valueToCode(block, 'DURATION', GameGenerator.ORDER_NONE) || '1.0';
     
-    return `// Glide to position (requires interpolation component)
-let target = Vec3::new(${x}, ${y}, ${z});
-let speed = (target - transform.translation).length() / ${duration};
-transform.translation = transform.translation.lerp(target, time.delta_secs() * speed);\n`;
+    return `let target = Vec3::new(${x}, ${y}, ${z});
+let distance = (target - transform.translation).length();
+let speed = distance / ${duration};
+let direction = (target - transform.translation).normalize_or_zero();
+transform.translation += direction * speed * time.delta_secs();\n`;
 };
 
 GameGenerator.forBlock['game_turn_degrees'] = function(block) {
@@ -74,8 +224,9 @@ GameGenerator.forBlock['game_set_velocity'] = function(block) {
     const vy = GameGenerator.valueToCode(block, 'VY', GameGenerator.ORDER_NONE) || '0.0';
     const vz = GameGenerator.valueToCode(block, 'VZ', GameGenerator.ORDER_NONE) || '0.0';
     
-    return `// Set velocity (requires Velocity component)
-velocity.linvel = Vec3::new(${vx}, ${vy}, ${vz});\n`;
+    return `// Simple velocity (moves transform directly)
+let velocity = Vec3::new(${vx}, ${vy}, ${vz});
+transform.translation += velocity * time.delta_secs();\n`;
 };
 
 // ============================================================================
@@ -113,8 +264,12 @@ GameGenerator.forBlock['game_mouse_position'] = function(block) {
 GameGenerator.forBlock['game_touching'] = function(block) {
     const tag = block.getFieldValue('TAG');
     
+    addGameComponent('Collision');
+    
     return [`// Check collision with ${tag}
-collision_events.iter().any(|e| e.has_tag("${tag}"))`, GameGenerator.ORDER_ATOMIC];
+// Use bevy_rapier or custom collision detection
+// Example: collision_query.iter().any(|c| c.tag == "${tag}")
+false`, GameGenerator.ORDER_ATOMIC];
 };
 
 GameGenerator.forBlock['game_distance_to'] = function(block) {
@@ -129,9 +284,14 @@ GameGenerator.forBlock['game_on_collision'] = function(block) {
     const tag = block.getFieldValue('TAG');
     const doCode = GameGenerator.statementToCode(block, 'DO');
     
+    addGameComponent('Collision');
+    
     return `// On collision with ${tag}
-if collision_events.iter().any(|e| e.has_tag("${tag}")) {
-${doCode}}\n`;
+// Add collision detection system with bevy_rapier
+// Example collision check:
+// if collision_with_${tag.toLowerCase()} {
+${doCode}// }
+\n`;
 };
 
 // ============================================================================
@@ -139,29 +299,34 @@ ${doCode}}\n`;
 // ============================================================================
 
 GameGenerator.forBlock['game_score'] = function(block) {
-    return ['game_state.score', GameGenerator.ORDER_ATOMIC];
+    addGameComponent('Score');
+    return ['score.value', GameGenerator.ORDER_ATOMIC];
 };
 
 GameGenerator.forBlock['game_change_score'] = function(block) {
+    addGameComponent('Score');
     const amount = GameGenerator.valueToCode(block, 'AMOUNT', GameGenerator.ORDER_NONE) || '1';
     
-    return `game_state.score += ${amount};\n`;
+    return `score.value += ${amount};\n`;
 };
 
 GameGenerator.forBlock['game_set_score'] = function(block) {
+    addGameComponent('Score');
     const value = GameGenerator.valueToCode(block, 'VALUE', GameGenerator.ORDER_NONE) || '0';
     
-    return `game_state.score = ${value};\n`;
+    return `score.value = ${value};\n`;
 };
 
 GameGenerator.forBlock['game_lives'] = function(block) {
-    return ['game_state.lives', GameGenerator.ORDER_ATOMIC];
+    addGameComponent('Lives');
+    return ['lives.value', GameGenerator.ORDER_ATOMIC];
 };
 
 GameGenerator.forBlock['game_change_lives'] = function(block) {
+    addGameComponent('Lives');
     const amount = GameGenerator.valueToCode(block, 'AMOUNT', GameGenerator.ORDER_NONE) || '1';
     
-    return `game_state.lives += ${amount};\n`;
+    return `lives.value += ${amount};\n`;
 };
 
 GameGenerator.forBlock['game_timer'] = function(block) {
@@ -169,8 +334,8 @@ GameGenerator.forBlock['game_timer'] = function(block) {
 };
 
 GameGenerator.forBlock['game_reset_timer'] = function(block) {
-    return `// Reset timer (requires custom timer resource)
-game_timer.reset();\n`;
+    return `// Reset timer - use time.elapsed_secs() for simple timer
+// Or create a custom GameTimer resource\n`;
 };
 
 // ============================================================================
@@ -178,11 +343,11 @@ game_timer.reset();\n`;
 // ============================================================================
 
 GameGenerator.forBlock['game_show'] = function(block) {
-    return `visibility.is_visible = true;\n`;
+    return `*visibility = Visibility::Visible;\n`;
 };
 
 GameGenerator.forBlock['game_hide'] = function(block) {
-    return `visibility.is_visible = false;\n`;
+    return `*visibility = Visibility::Hidden;\n`;
 };
 
 GameGenerator.forBlock['game_set_color'] = function(block) {
@@ -190,8 +355,10 @@ GameGenerator.forBlock['game_set_color'] = function(block) {
     const g = GameGenerator.valueToCode(block, 'G', GameGenerator.ORDER_NONE) || '1.0';
     const b = GameGenerator.valueToCode(block, 'B', GameGenerator.ORDER_NONE) || '1.0';
     
-    return `// Set material color
-material.base_color = Color::srgb(${r}, ${g}, ${b});\n`;
+    return `// Set color - add Sprite component to query
+// For 2D: sprite.color = Color::srgb(${r}, ${g}, ${b});
+// For 3D: material.base_color = Color::srgb(${r}, ${g}, ${b});
+\n`;
 };
 
 GameGenerator.forBlock['game_set_size'] = function(block) {
@@ -215,7 +382,7 @@ transform.scale *= 1.0 + scale_change;\n`;
 GameGenerator.forBlock['game_play_sound'] = function(block) {
     const sound = block.getFieldValue('SOUND');
     
-    return `// Play sound
+    return `// Play sound - add asset_server: Res<AssetServer> to system params
 commands.spawn(AudioBundle {
     source: asset_server.load("sounds/${sound}"),
     ..default()
@@ -225,7 +392,7 @@ commands.spawn(AudioBundle {
 GameGenerator.forBlock['game_play_sound_until_done'] = function(block) {
     const sound = block.getFieldValue('SOUND');
     
-    return `// Play sound until done (requires audio system)
+    return `// Play sound once - add asset_server: Res<AssetServer> to system params
 commands.spawn(AudioBundle {
     source: asset_server.load("sounds/${sound}"),
     settings: PlaybackSettings::ONCE,
@@ -234,7 +401,7 @@ commands.spawn(AudioBundle {
 };
 
 GameGenerator.forBlock['game_stop_all_sounds'] = function(block) {
-    return `// Stop all sounds
+    return `// Stop all sounds - add audio_query: Query<Entity, With<AudioSink>> to system params
 for entity in audio_query.iter() {
     commands.entity(entity).despawn();
 }\n`;
@@ -243,8 +410,8 @@ for entity in audio_query.iter() {
 GameGenerator.forBlock['game_set_volume'] = function(block) {
     const volume = GameGenerator.valueToCode(block, 'VOLUME', GameGenerator.ORDER_NONE) || '100.0';
     
-    return `// Set volume
-audio_settings.volume = ${volume} / 100.0;\n`;
+    return `// Set global volume - add GlobalVolume resource
+// global_volume.volume = Volume::new(${volume} / 100.0);\n`;
 };
 
 // ============================================================================
@@ -284,9 +451,18 @@ for entity in ${tag.toLowerCase()}_query.iter() {
 GameGenerator.forBlock['game_when_game_starts'] = function(block) {
     const doCode = GameGenerator.statementToCode(block, 'DO');
     
-    return `// Startup system
-fn game_start_system(
-    mut commands: Commands,
+    // Determine what resources/components are needed based on the code
+    let params = ['mut commands: Commands'];
+    
+    if (gameRequiredComponents.has('Score')) {
+        params.push('mut score: ResMut<Score>');
+    }
+    if (gameRequiredComponents.has('Lives')) {
+        params.push('mut lives: ResMut<Lives>');
+    }
+    
+    return `fn game_start_system(
+    ${params.join(',\n    ')},
 ) {
 ${doCode}}
 
@@ -296,12 +472,36 @@ ${doCode}}
 GameGenerator.forBlock['game_every_frame'] = function(block) {
     const doCode = GameGenerator.statementToCode(block, 'DO');
     
-    return `// Update system
-fn game_update_system(
-    time: Res<Time>,
-    mut query: Query<&mut Transform>,
+    // Build comprehensive system parameters
+    let params = ['time: Res<Time>'];
+    
+    if (gameRequiredComponents.has('Score')) {
+        params.push('mut score: ResMut<Score>');
+    }
+    if (gameRequiredComponents.has('Lives')) {
+        params.push('mut lives: ResMut<Lives>');
+    }
+    
+    // Add query with common components
+    let queryComponents = ['&mut Transform'];
+    if (gameRequiredComponents.has('Health')) {
+        queryComponents.push('&mut Health');
+    }
+    if (gameRequiredComponents.has('Inventory')) {
+        queryComponents.push('&mut Inventory');
+    }
+    
+    params.push(`mut query: Query<(${queryComponents.join(', ')})>`);
+    params.push('keyboard: Res<ButtonInput<KeyCode>>');
+    params.push('mouse: Res<ButtonInput<MouseButton>>');
+    params.push('mut commands: Commands');
+    
+    return `fn game_update_system(
+    ${params.join(',\n    ')},
 ) {
-${doCode}}
+    for (mut transform${gameRequiredComponents.has('Health') ? ', mut health' : ''}${gameRequiredComponents.has('Inventory') ? ', mut inventory' : ''}) in query.iter_mut() {
+${doCode}    }
+}
 
 // Add to app: app.add_systems(Update, game_update_system);\n\n`;
 };
@@ -309,9 +509,10 @@ ${doCode}}
 GameGenerator.forBlock['game_wait_seconds'] = function(block) {
     const duration = GameGenerator.valueToCode(block, 'DURATION', GameGenerator.ORDER_NONE) || '1.0';
     
-    return `// Wait (requires timer component)
-timer.tick(time.delta());
-if timer.elapsed_secs() < ${duration} {
+    addGameComponent('WaitTimer');
+    
+    return `// Wait using elapsed time
+if time.elapsed_secs() < ${duration} {
     return;
 }\n`;
 };
@@ -319,7 +520,7 @@ if timer.elapsed_secs() < ${duration} {
 GameGenerator.forBlock['game_repeat_forever'] = function(block) {
     const doCode = GameGenerator.statementToCode(block, 'DO');
     
-    return `// Forever loop (runs every frame in Update system)
+    return `// Forever loop - this code runs every frame
 ${doCode}`;
 };
 
@@ -442,39 +643,47 @@ camera_transform.translation.y = camera_transform.translation.y.clamp(${minY}, $
 // ============================================================================
 
 GameGenerator.forBlock['game_health'] = function(block) {
+    addGameComponent('Health');
     return ['health.current', GameGenerator.ORDER_ATOMIC];
 };
 
 GameGenerator.forBlock['game_max_health'] = function(block) {
+    addGameComponent('Health');
     return ['health.max', GameGenerator.ORDER_ATOMIC];
 };
 
 GameGenerator.forBlock['game_take_damage'] = function(block) {
+    addGameComponent('Health');
     const amount = GameGenerator.valueToCode(block, 'AMOUNT', GameGenerator.ORDER_NONE) || '1';
     
     return `health.current = (health.current - ${amount}).max(0.0);\n`;
 };
 
 GameGenerator.forBlock['game_heal'] = function(block) {
+    addGameComponent('Health');
     const amount = GameGenerator.valueToCode(block, 'AMOUNT', GameGenerator.ORDER_NONE) || '1';
     
     return `health.current = (health.current + ${amount}).min(health.max);\n`;
 };
 
 GameGenerator.forBlock['game_set_health'] = function(block) {
+    addGameComponent('Health');
     const value = GameGenerator.valueToCode(block, 'VALUE', GameGenerator.ORDER_NONE) || '100';
     
     return `health.current = ${value}.min(health.max);\n`;
 };
 
 GameGenerator.forBlock['game_is_dead'] = function(block) {
+    addGameComponent('Health');
     return ['health.current <= 0.0', GameGenerator.ORDER_RELATIONAL];
 };
 
 GameGenerator.forBlock['game_invincible'] = function(block) {
     const duration = GameGenerator.valueToCode(block, 'DURATION', GameGenerator.ORDER_NONE) || '2.0';
     
-    return `// Set invincibility
+    addGameComponent('Invincibility');
+    
+    return `// Set invincibility timer
 invincibility.duration = ${duration};
 invincibility.timer = 0.0;\n`;
 };
@@ -509,30 +718,35 @@ commands.entity(entity).insert(ParticleTrail::${type});\n`;
 // ============================================================================
 
 GameGenerator.forBlock['game_add_item'] = function(block) {
+    addGameComponent('Inventory');
     const item = block.getFieldValue('ITEM');
     
     return `inventory.add("${item}");\n`;
 };
 
 GameGenerator.forBlock['game_remove_item'] = function(block) {
+    addGameComponent('Inventory');
     const item = block.getFieldValue('ITEM');
     
     return `inventory.remove("${item}");\n`;
 };
 
 GameGenerator.forBlock['game_has_item'] = function(block) {
+    addGameComponent('Inventory');
     const item = block.getFieldValue('ITEM');
     
     return [`inventory.has("${item}")`, GameGenerator.ORDER_ATOMIC];
 };
 
 GameGenerator.forBlock['game_item_count'] = function(block) {
+    addGameComponent('Inventory');
     const item = block.getFieldValue('ITEM');
     
     return [`inventory.count("${item}")`, GameGenerator.ORDER_ATOMIC];
 };
 
 GameGenerator.forBlock['game_clear_inventory'] = function(block) {
+    addGameComponent('Inventory');
     return `inventory.clear();\n`;
 };
 

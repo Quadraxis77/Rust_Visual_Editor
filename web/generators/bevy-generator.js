@@ -166,6 +166,11 @@ BevyGenerator.workspaceToCode = function(workspace) {
     // Clear imports at start of generation
     clearBevyImports();
     
+    // Clear game components tracking (from game-generator.js)
+    if (typeof clearGameComponents === 'function') {
+        clearGameComponents();
+    }
+    
     // Add default Bevy imports
     addBevyImport('use bevy::prelude::*;');
     
@@ -182,9 +187,15 @@ BevyGenerator.workspaceToCode = function(workspace) {
         }
     }
     
-    // Combine imports and code
+    // Generate game components if any were used
+    let gameComponents = '';
+    if (typeof generateGameComponents === 'function') {
+        gameComponents = generateGameComponents();
+    }
+    
+    // Combine imports, game components, and code
     const imports = generateBevyImports();
-    const fullCode = imports + code.join('\n');
+    const fullCode = imports + gameComponents + code.join('\n');
     
     // Validate generated code (basic syntax check)
     if (!validateBevyRustSyntax(fullCode)) {

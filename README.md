@@ -1,6 +1,6 @@
 # 🦀 Rust Visual Editor
 
-**Version 0.2.0**
+**Version 0.2.1**
 
 A visual programming environment for Rust, WGSL, and Bevy built with Blockly.
 
@@ -20,6 +20,7 @@ Or manually:
 - **Visual Block Programming**: Drag-and-drop interface for building code
 - **🎮 Game Development Blocks**: 100+ Scratch-like blocks for Bevy game development (NEW in v0.2.0)
   - Movement, input, collision, health, inventory, AI, particles, camera, and more!
+  - **Auto-generates required components** - no manual setup needed!
 - **Real-time Code Generation**: See generated code as you build
 - **Multi-File Support**: Generate and manage multiple files
 - **Code Validation**: Built-in validation and error checking
