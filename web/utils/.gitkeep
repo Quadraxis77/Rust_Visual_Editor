@@ -1,0 +1,5 @@
+# Utility modules directory
+# This directory contains utility functions and helpers:
+# - code-parser.js (will be moved here)
+# - template-engine.js
+# - type-checker.js

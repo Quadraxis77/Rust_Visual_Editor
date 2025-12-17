@@ -1,0 +1,127 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Visual Editor</title>
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>🦀 Rust Visual Editor</h1>
+            <div class="toolbar">
+                <div class="mode-selector">
+                    <label for="editorMode">Mode:</label>
+                    <select id="editorMode">
+                        <option value="rust" data-color="#CE422B">🦀 Rust</option>
+                        <option value="wgsl" data-color="#5C2E91">🎨 WGSL</option>
+                        <option value="bevy" data-color="#4EC9B0">🎮 Bevy</option>
+                    </select>
+                </div>
+                <div class="toolbar-divider"></div>
+                <button id="checkCode" title="Check Rust code for errors and validate struct alignment">🔍 Check Code</button>
+                <button id="importCode" title="Import code files">📥 Import Code</button>
+                <button id="exportCode" title="Export generated code">💾 Export Code</button>
+                <div class="toolbar-divider"></div>
+                <button id="saveWorkspace" title="Save workspace blocks">💾 Save Workspace</button>
+                <button id="loadBlocks" title="Load workspace blocks">📂 Load Workspace</button>
+                <button id="clearWorkspace" title="Clear workspace">🗑️ Clear</button>
+                <div class="toolbar-divider"></div>
+                <div class="dropdown">
+                    <button id="showExamplesMenu" title="View examples and workflows">📚 Examples ▼</button>
+                    <div class="dropdown-content" id="examplesDropdown">
+                        <a href="#" id="showExamples">📄 Example Workspaces</a>
+                        <a href="#" id="showWorkflows">📖 Workflow Guides</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" id="saveAsTemplate">💾 Save as Template</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <div id="content">
+            <div id="blocklyContainer">
+                <div id="blocklyDiv"></div>
+            </div>
+            <div id="codePanel">
+                <div class="code-header">
+                    <h3>Generated Code <span class="auto-gen-badge" title="Code updates automatically as you build">⚡ Auto</span></h3>
+                    <div class="code-header-actions">
+                        <button id="toggleCodePanel" title="Hide/Show code panel">👁️ Hide</button>
+                        <button id="copyCode" title="Copy all code">📋 Copy</button>
+                        <button id="downloadAll" class="download-all-btn" title="Download all files as ZIP">📦 Download All</button>
+                    </div>
+                </div>
+                <div id="codeTabbedDisplay" class="code-tabbed-container">
+                    <div class="code-tab-bar" id="codeTabBar">
+                        <!-- Tabs will be dynamically added here -->
+                    </div>
+                    <div class="code-content-area" id="codeContentArea">
+                        <div class="code-empty-state">
+                            <p>No code generated yet</p>
+                            <p>Add blocks to the workspace and click "Generate" to see the code</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="workflowPanel" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Error Panel (initially hidden) -->
+    <div id="errorPanel" class="error-panel hidden">
+        <div class="error-panel-header">
+            <span class="error-panel-title">⚠️ Errors</span>
+            <button class="error-panel-close" id="closeErrorPanel">×</button>
+        </div>
+        <div class="error-panel-content" id="errorPanelContent">
+            <!-- Errors will be dynamically added here -->
+        </div>
+    </div>
+
+    <xml id="toolbox" style="display: none"></xml>
+
+    <!-- Utility modules -->
+    <script src="utils/template-engine.js"></script>
+    
+    <!-- Core modules -->
+    <script src="core/performance-cache.js"></script>
+    <script src="core/performance-optimizer.js"></script>
+    <script src="core/naming-validator.js"></script>
+    <script src="core/validator.js"></script>
+    <script src="core/error-handler.js"></script>
+    <script src="core/rust-compiler-client.js"></script>
+    <script src="core/cross-mode-validator.js"></script>
+    <script src="core/workspace-manager.js"></script>
+    <script src="core/mode-manager.js"></script>
+    <script src="core/reference-manager.js"></script>
+    <script src="core/multi-file-generator.js"></script>
+    <script src="core/tabbed-code-display.js"></script>
+    <script src="core/file-link-visualizer.js"></script>
+    
+    <!-- Toolbox modules -->
+    <script src="toolbox/toolbox-manager.js"></script>
+    <script src="toolbox/rust-toolbox.js"></script>
+    <script src="toolbox/wgsl-toolbox.js"></script>
+    <script src="toolbox/bevy-toolbox.js"></script>
+    
+    <!-- Consolidated block definitions (3 files) -->
+    <script src="blocks/rust-blocks.js"></script>
+    <script src="blocks/wgsl-blocks.js"></script>
+    <script src="blocks/bevy-blocks.js"></script>
+    
+    <!-- Consolidated generators (3 files) -->
+    <script src="generators/rust-generator.js"></script>
+    <script src="generators/wgsl-generator.js"></script>
+    <script src="generators/bevy-generator.js"></script>
+    
+    <!-- Additional utilities -->
+    <script src="code_parser.js"></script>
+    <script src="workflows.js"></script>
+    
+    <!-- Main application -->
+    <script src="app.js"></script>
+</body>
+</html>

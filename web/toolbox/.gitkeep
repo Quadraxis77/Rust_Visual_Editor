@@ -1,0 +1,6 @@
+# Toolbox modules directory
+# This directory contains toolbox definitions and management:
+# - toolbox-manager.js
+# - rust-toolbox.js
+# - wgsl-toolbox.js
+# - bevy-toolbox.js
