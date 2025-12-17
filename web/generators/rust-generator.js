@@ -414,18 +414,28 @@ RustGenerator.forBlock['rust_main'] = function(block) {
 
 RustGenerator.forBlock['rust_function'] = function(block) {
     const name = block.getFieldValue('NAME');
-    const params = RustGenerator.valueToCode(block, 'PARAMS', RustGenerator.ORDER_NONE) || '';
-    const returnType = RustGenerator.valueToCode(block, 'RETURN_TYPE', RustGenerator.ORDER_NONE) || '';
-    const body = RustGenerator.statementToCode(block, 'BODY');
+    const params = RustGenerator.valueToCode(block, 'PARAMS_OPTIONAL', RustGenerator.ORDER_NONE) || '';
+    const returnType = RustGenerator.valueToCode(block, 'RETURN_TYPE_OPTIONAL', RustGenerator.ORDER_NONE) || '';
+    let body = RustGenerator.statementToCode(block, 'BODY');
+    
+    // If body is empty, add unimplemented!() for functions with return types, or empty for unit return
+    if (!body.trim()) {
+        body = returnType ? '    unimplemented!()\n' : '';
+    }
     
     return `fn ${name}(${params})${returnType} {\n${body}}\n\n`;
 };
 
 RustGenerator.forBlock['rust_pub_function'] = function(block) {
     const name = block.getFieldValue('NAME');
-    const params = RustGenerator.valueToCode(block, 'PARAMS', RustGenerator.ORDER_NONE) || '';
-    const returnType = RustGenerator.valueToCode(block, 'RETURN_TYPE', RustGenerator.ORDER_NONE) || '';
-    const body = RustGenerator.statementToCode(block, 'BODY');
+    const params = RustGenerator.valueToCode(block, 'PARAMS_OPTIONAL', RustGenerator.ORDER_NONE) || '';
+    const returnType = RustGenerator.valueToCode(block, 'RETURN_TYPE_OPTIONAL', RustGenerator.ORDER_NONE) || '';
+    let body = RustGenerator.statementToCode(block, 'BODY');
+    
+    // If body is empty, add unimplemented!() for functions with return types, or empty for unit return
+    if (!body.trim()) {
+        body = returnType ? '    unimplemented!()\n' : '';
+    }
     
     return `pub fn ${name}(${params})${returnType} {\n${body}}\n\n`;
 };
@@ -433,8 +443,8 @@ RustGenerator.forBlock['rust_pub_function'] = function(block) {
 RustGenerator.forBlock['rust_method'] = function(block) {
     const name = block.getFieldValue('NAME');
     const selfType = block.getFieldValue('SELF_TYPE');
-    const params = RustGenerator.valueToCode(block, 'PARAMS', RustGenerator.ORDER_NONE) || '';
-    const returnType = RustGenerator.valueToCode(block, 'RETURN_TYPE', RustGenerator.ORDER_NONE) || '';
+    const params = RustGenerator.valueToCode(block, 'PARAMS_OPTIONAL', RustGenerator.ORDER_NONE) || '';
+    const returnType = RustGenerator.valueToCode(block, 'RETURN_TYPE_OPTIONAL', RustGenerator.ORDER_NONE) || '';
     const body = RustGenerator.statementToCode(block, 'BODY');
     
     const selfParam = selfType === 'REF' ? '&self' : selfType === 'MUT_REF' ? '&mut self' : 'self';
@@ -1616,8 +1626,8 @@ RustGenerator.forBlock['rust_question_mark'] = function(block) {
 
 RustGenerator.forBlock['rust_async_function'] = function(block) {
     const name = block.getFieldValue('NAME');
-    const params = RustGenerator.valueToCode(block, 'PARAMS', RustGenerator.ORDER_NONE) || '';
-    const returnType = RustGenerator.valueToCode(block, 'RETURN_TYPE', RustGenerator.ORDER_NONE) || '';
+    const params = RustGenerator.valueToCode(block, 'PARAMS_OPTIONAL', RustGenerator.ORDER_NONE) || '';
+    const returnType = RustGenerator.valueToCode(block, 'RETURN_TYPE_OPTIONAL', RustGenerator.ORDER_NONE) || '';
     const body = RustGenerator.statementToCode(block, 'BODY');
     
     return `async fn ${name}(${params})${returnType} {\n${body}}\n\n`;
@@ -1661,8 +1671,8 @@ RustGenerator.forBlock['rust_trait_def'] = function(block) {
 
 RustGenerator.forBlock['rust_trait_method'] = function(block) {
     const name = block.getFieldValue('NAME');
-    const params = RustGenerator.valueToCode(block, 'PARAMS', RustGenerator.ORDER_NONE) || '';
-    const returnType = RustGenerator.valueToCode(block, 'RETURN_TYPE', RustGenerator.ORDER_NONE) || '';
+    const params = RustGenerator.valueToCode(block, 'PARAMS_OPTIONAL', RustGenerator.ORDER_NONE) || '';
+    const returnType = RustGenerator.valueToCode(block, 'RETURN_TYPE_OPTIONAL', RustGenerator.ORDER_NONE) || '';
     
     return `    fn ${name}(${params})${returnType};\n`;
 };

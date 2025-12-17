@@ -389,7 +389,7 @@ class MultiModeCodeParser {
         return xml;
     }
 
-    // Convert single block to XML
+    // Convert single block to XML (for value blocks only, not statement chains)
     blockToXml(block, indent = 0) {
         const spaces = ' '.repeat(indent);
         let xml = `${spaces}<block type="${block.type}" id="${block.id}">\n`;
@@ -401,7 +401,7 @@ class MultiModeCodeParser {
             }
         }
         
-        // Add values
+        // Add values (these are value inputs, not statement chains)
         if (block.values) {
             for (let [name, valueBlock] of Object.entries(block.values)) {
                 if (valueBlock) {
@@ -412,20 +412,12 @@ class MultiModeCodeParser {
             }
         }
         
-        // Add statements
+        // Add statements (these need to be chained with <next> tags)
         if (block.statements) {
             for (let [name, stmtBlocks] of Object.entries(block.statements)) {
                 if (stmtBlocks && stmtBlocks.length > 0) {
                     xml += `${spaces}  <statement name="${name}">\n`;
-                    for (let i = 0; i < stmtBlocks.length; i++) {
-                        xml += this.blockToXml(stmtBlocks[i], indent + 4);
-                        if (i < stmtBlocks.length - 1) {
-                            xml += `${spaces}    <next>\n`;
-                        }
-                    }
-                    for (let i = 0; i < stmtBlocks.length - 1; i++) {
-                        xml += `${spaces}    </next>\n`;
-                    }
+                    xml += this.chainBlocks(stmtBlocks, indent + 4);
                     xml += `${spaces}  </statement>\n`;
                 }
             }
@@ -460,6 +452,33 @@ class MultiModeCodeParser {
             id: this.generateBlockId(),
             fields: {
                 NAME: text
+            }
+        };
+    }
+
+    // Create a parameters block
+    createParametersBlock(params) {
+        if (!params || params.trim() === '') return null;
+        return {
+            type: 'rust_parameters',
+            id: this.generateBlockId(),
+            fields: {
+                PARAMS: params.trim()
+            }
+        };
+    }
+
+    // Create a return type block
+    createReturnTypeBlock(returnType) {
+        if (!returnType || returnType.trim() === '') return null;
+        // Remove leading -> if present
+        const cleanType = returnType.trim().replace(/^->\s*/, '');
+        if (cleanType === '') return null;
+        return {
+            type: 'rust_return_type',
+            id: this.generateBlockId(),
+            fields: {
+                TYPE: cleanType
             }
         };
     }
@@ -524,16 +543,23 @@ class RustParser {
     // Parse use statements
     parseUseStatements(code) {
         const blocks = [];
-        const useRegex = /use\s+([^;]+);/g;
+        // Match use statements at the start of a line (after optional whitespace)
+        // This avoids matching "use" in comments or other contexts
+        const useRegex = /^\s*use\s+([^;]+);/gm;
         let match;
         
         while ((match = useRegex.exec(code)) !== null) {
-            console.log('[RustParser] Found use statement:', match[1].trim());
+            const path = match[1].trim();
+            // Skip if the path contains comment markers (shouldn't happen with line-start matching, but safety check)
+            if (path.includes('//') || path.includes('/*')) {
+                continue;
+            }
+            console.log('[RustParser] Found use statement:', path);
             blocks.push({
                 type: 'rust_use',
                 id: this.parent.generateBlockId(),
                 fields: {
-                    PATH: match[1].trim()
+                    PATH: path
                 }
             });
         }
@@ -559,16 +585,17 @@ class RustParser {
                     }
                 });
             } else {
+                // Use rust_pub_function for pub functions, rust_function for private
+                const blockType = func.visibility === 'pub' ? 'rust_pub_function' : 'rust_function';
                 blocks.push({
-                    type: 'rust_function',
+                    type: blockType,
                     id: this.parent.generateBlockId(),
                     fields: {
-                        NAME: func.name,
-                        VISIBILITY: func.visibility || ''
+                        NAME: func.name
                     },
                     values: {
-                        PARAMS: func.params ? this.parent.createTextBlock(func.params) : null,
-                        RETURN_TYPE: func.returnType ? this.parent.createTextBlock(func.returnType) : null
+                        PARAMS_OPTIONAL: this.parent.createParametersBlock(func.params),
+                        RETURN_TYPE_OPTIONAL: this.parent.createReturnTypeBlock(func.returnType)
                     },
                     statements: {
                         BODY: this.parseStatements(func.body)
@@ -694,18 +721,27 @@ class RustParser {
     // Parse structs
     parseStructs(code) {
         const blocks = [];
-        const structRegex = /struct\s+(\w+)\s*\{([^}]+)\}/g;
+        // Match structs with optional attributes and visibility
+        const structRegex = /(?:#\[derive\(([^)]+)\)\]\s*)?(pub\s+)?struct\s+(\w+)\s*\{([^}]+)\}/g;
         let match;
         
         while ((match = structRegex.exec(code)) !== null) {
+            const derives = match[1] || '';
+            const name = match[3];
+            const fieldsText = match[4].trim();
+            
+            // Parse individual fields
+            const fieldBlocks = this.parseStructFields(fieldsText);
+            
             blocks.push({
                 type: 'rust_struct',
                 id: this.parent.generateBlockId(),
                 fields: {
-                    NAME: match[1]
+                    NAME: name,
+                    DERIVES: derives
                 },
-                values: {
-                    FIELDS: this.parent.createTextBlock(match[2].trim())
+                statements: {
+                    FIELDS: fieldBlocks
                 }
             });
         }
@@ -713,31 +749,122 @@ class RustParser {
         return blocks;
     }
 
+    // Parse struct fields
+    parseStructFields(fieldsText) {
+        const fields = [];
+        // Split by comma, handling potential nested types
+        const fieldLines = fieldsText.split(',').map(f => f.trim()).filter(f => f);
+        
+        for (const line of fieldLines) {
+            // Match: pub? name: type
+            const match = line.match(/^(pub\s+)?(\w+)\s*:\s*(.+)$/);
+            if (match) {
+                fields.push({
+                    type: 'rust_field',
+                    id: this.parent.generateBlockId(),
+                    fields: {
+                        NAME: match[2],
+                        TYPE: match[3].trim()
+                    }
+                });
+            }
+        }
+        
+        return fields;
+    }
+
     // Parse statements within a block
     parseStatements(code) {
         const statements = [];
-        const lines = code.split('\n').map(l => l.trim()).filter(l => l);
         
-        for (let line of lines) {
-            try {
-                if (line.startsWith('let ')) {
-                    const stmt = this.parseLetBinding(line);
-                    if (stmt) statements.push(stmt);
-                } else if (line.startsWith('return ')) {
-                    statements.push(this.parseReturn(line));
-                } else if (line.startsWith('println!')) {
-                    statements.push(this.parsePrintln(line));
-                } else if (line.endsWith(';')) {
+        // Don't split by lines - parse as a whole to handle multi-line constructs
+        code = code.trim();
+        let i = 0;
+        
+        while (i < code.length) {
+            // Skip whitespace
+            while (i < code.length && /\s/.test(code[i])) i++;
+            if (i >= code.length) break;
+            
+            // Try to parse different statement types
+            let stmt = null;
+            let consumed = 0;
+            
+            // If statement
+            if (code.substr(i, 2) === 'if') {
+                const result = this.parseIfStatement(code.substr(i));
+                if (result) {
+                    stmt = result.block;
+                    consumed = result.length;
+                }
+            }
+            // While loop
+            else if (code.substr(i, 5) === 'while') {
+                const result = this.parseWhileLoop(code.substr(i));
+                if (result) {
+                    stmt = result.block;
+                    consumed = result.length;
+                }
+            }
+            // For loop
+            else if (code.substr(i, 3) === 'for') {
+                const result = this.parseForLoop(code.substr(i));
+                if (result) {
+                    stmt = result.block;
+                    consumed = result.length;
+                }
+            }
+            // Let binding
+            else if (code.substr(i, 3) === 'let') {
+                const result = this.parseLetBindingFull(code.substr(i));
+                if (result) {
+                    stmt = result.block;
+                    consumed = result.length;
+                }
+            }
+            // Return statement
+            else if (code.substr(i, 6) === 'return') {
+                const result = this.parseReturnFull(code.substr(i));
+                if (result) {
+                    stmt = result.block;
+                    consumed = result.length;
+                }
+            }
+            // Expression statement (ends with semicolon)
+            else {
+                const result = this.parseExpressionStatement(code.substr(i));
+                if (result) {
+                    stmt = result.block;
+                    consumed = result.length;
+                }
+            }
+            
+            if (stmt) {
+                statements.push(stmt);
+                i += consumed;
+            } else {
+                // Check if there's remaining code that could be an implicit return
+                const remaining = code.substr(i).trim();
+                if (remaining && !remaining.startsWith('}')) {
+                    // Treat as implicit return (expression without semicolon)
                     statements.push({
-                        type: 'rust_expr_stmt',
+                        type: 'rust_return',
                         id: this.parent.generateBlockId(),
                         values: {
-                            EXPR: this.parent.createTextBlock(line.slice(0, -1))
+                            VALUE: this.parent.createTextBlock(remaining)
                         }
                     });
+                    break;
                 }
-            } catch (error) {
-                this.parent.addError(`Statement parse error: ${error.message}`, 0, 0);
+                
+                // Skip to next semicolon or brace if we can't parse
+                const nextSemi = code.indexOf(';', i);
+                const nextBrace = code.indexOf('}', i);
+                if (nextSemi !== -1 && (nextBrace === -1 || nextSemi < nextBrace)) {
+                    i = nextSemi + 1;
+                } else {
+                    break;
+                }
             }
         }
         
@@ -793,6 +920,206 @@ class RustParser {
             };
         }
         return null;
+    }
+
+    // Helper: Find matching closing brace
+    findMatchingBrace(code, startIdx = 0) {
+        let depth = 0;
+        for (let i = startIdx; i < code.length; i++) {
+            if (code[i] === '{') depth++;
+            else if (code[i] === '}') {
+                depth--;
+                if (depth === 0) return i;
+            }
+        }
+        return -1;
+    }
+
+    // Parse if statement with full structure
+    parseIfStatement(code) {
+        const match = code.match(/^if\s+(.+?)\s*\{/);
+        if (!match) return null;
+        
+        const condition = match[1].trim();
+        const bodyStart = code.indexOf('{');
+        const bodyEnd = this.findMatchingBrace(code, bodyStart);
+        
+        if (bodyEnd === -1) return null;
+        
+        const body = code.substring(bodyStart + 1, bodyEnd);
+        const totalLength = bodyEnd + 1;
+        
+        return {
+            block: {
+                type: 'rust_if',
+                id: this.parent.generateBlockId(),
+                values: {
+                    CONDITION: this.parent.createTextBlock(condition)
+                },
+                statements: {
+                    THEN: this.parseStatements(body)
+                }
+            },
+            length: totalLength
+        };
+    }
+
+    // Parse while loop
+    parseWhileLoop(code) {
+        const match = code.match(/^while\s+(.+?)\s*\{/);
+        if (!match) return null;
+        
+        const condition = match[1].trim();
+        const bodyStart = code.indexOf('{');
+        const bodyEnd = this.findMatchingBrace(code, bodyStart);
+        
+        if (bodyEnd === -1) return null;
+        
+        const body = code.substring(bodyStart + 1, bodyEnd);
+        const totalLength = bodyEnd + 1;
+        
+        return {
+            block: {
+                type: 'rust_while',
+                id: this.parent.generateBlockId(),
+                values: {
+                    CONDITION: this.parent.createTextBlock(condition)
+                },
+                statements: {
+                    BODY: this.parseStatements(body)
+                }
+            },
+            length: totalLength
+        };
+    }
+
+    // Parse for loop
+    parseForLoop(code) {
+        const match = code.match(/^for\s+(\w+)\s+in\s+(.+?)\s*\{/);
+        if (!match) return null;
+        
+        const variable = match[1];
+        const iterator = match[2].trim();
+        const bodyStart = code.indexOf('{');
+        const bodyEnd = this.findMatchingBrace(code, bodyStart);
+        
+        if (bodyEnd === -1) return null;
+        
+        const body = code.substring(bodyStart + 1, bodyEnd);
+        const totalLength = bodyEnd + 1;
+        
+        return {
+            block: {
+                type: 'rust_for',
+                id: this.parent.generateBlockId(),
+                fields: {
+                    VAR: variable
+                },
+                values: {
+                    ITERATOR: this.parent.createTextBlock(iterator)
+                },
+                statements: {
+                    BODY: this.parseStatements(body)
+                }
+            },
+            length: totalLength
+        };
+    }
+
+    // Parse let binding (full version with semicolon detection)
+    parseLetBindingFull(code) {
+        const match = code.match(/^let\s+(mut\s+)?(\w+)(?:\s*:\s*([^=]+))?\s*=\s*([^;]+);/);
+        if (!match) return null;
+        
+        return {
+            block: {
+                type: 'rust_let_binding',
+                id: this.parent.generateBlockId(),
+                fields: {
+                    MUTABLE: match[1] ? 'TRUE' : 'FALSE',
+                    NAME: match[2]
+                },
+                values: {
+                    TYPE: match[3] ? this.parent.createTextBlock(`: ${match[3].trim()}`) : null,
+                    VALUE: this.parent.createTextBlock(match[4].trim())
+                }
+            },
+            length: match[0].length
+        };
+    }
+
+    // Parse return statement (full version)
+    parseReturnFull(code) {
+        const match = code.match(/^return\s+([^;]+);/);
+        if (!match) return null;
+        
+        return {
+            block: {
+                type: 'rust_return',
+                id: this.parent.generateBlockId(),
+                values: {
+                    VALUE: this.parent.createTextBlock(match[1].trim())
+                }
+            },
+            length: match[0].length
+        };
+    }
+
+    // Parse expression statement
+    parseExpressionStatement(code) {
+        const match = code.match(/^([^;]+);/);
+        if (!match) return null;
+        
+        const expr = match[1].trim();
+        
+        // Check for specific patterns
+        if (expr.startsWith('println!')) {
+            const printMatch = expr.match(/println!\((.+)\)$/);
+            if (printMatch) {
+                return {
+                    block: {
+                        type: 'rust_println',
+                        id: this.parent.generateBlockId(),
+                        values: {
+                            MESSAGE: this.parent.createTextBlock(printMatch[1].trim())
+                        }
+                    },
+                    length: match[0].length
+                };
+            }
+        }
+        
+        // Assignment
+        if (expr.includes('=') && !expr.includes('==') && !expr.includes('!=') && !expr.includes('<=') && !expr.includes('>=')) {
+            const assignMatch = expr.match(/^(\w+)\s*=\s*(.+)$/);
+            if (assignMatch) {
+                return {
+                    block: {
+                        type: 'rust_assign',
+                        id: this.parent.generateBlockId(),
+                        fields: {
+                            VAR: assignMatch[1]
+                        },
+                        values: {
+                            VALUE: this.parent.createTextBlock(assignMatch[2].trim())
+                        }
+                    },
+                    length: match[0].length
+                };
+            }
+        }
+        
+        // Generic expression statement
+        return {
+            block: {
+                type: 'rust_expr_stmt',
+                id: this.parent.generateBlockId(),
+                values: {
+                    EXPR: this.parent.createTextBlock(expr)
+                }
+            },
+            length: match[0].length
+        };
     }
 }
 
@@ -1045,8 +1372,8 @@ class BevyParser {
                     NAME: match[1]
                 },
                 values: {
-                    PARAMS: this.parent.createTextBlock(match[2].trim()),
-                    RETURN_TYPE: match[3] ? this.parent.createTextBlock(match[3].trim()) : null
+                    PARAMS: this.parent.createParametersBlock(match[2]),
+                    RETURN_TYPE: this.parent.createReturnTypeBlock(match[3])
                 },
                 statements: {
                     BODY: this.parseStatements(match[4])
@@ -1201,7 +1528,7 @@ class BiospheresParser {
                         NAME: match[1]
                     },
                     values: {
-                        PARAMS: this.parent.createTextBlock(match[2].trim())
+                        PARAMS: this.parent.createParametersBlock(match[2])
                     },
                     statements: {
                         BODY: this.parseStatements(body)

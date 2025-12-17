@@ -1109,6 +1109,9 @@ function validateWorkspace() {
             const disconnectedBlocks = errorHandler.validateDisconnectedBlocks(workspace);
             if (disconnectedBlocks.length > 0) {
                 console.warn(`[App] Found ${disconnectedBlocks.length} block(s) with disconnected required inputs`);
+                disconnectedBlocks.forEach(block => {
+                    console.warn(`  - Block type: ${block.type}, missing inputs:`, block.missingInputs);
+                });
             }
         }
         
@@ -1676,6 +1679,7 @@ async function importCodeFiles(files) {
             // Convert to XML and load into workspace
             const xml = parser.blocksToXml(validBlocks, filename);
             console.log('[App] Generated XML:', xml.substring(0, 500) + '...');
+            console.log('[App] Full XML for debugging:', xml);
             
             const xmlDom = Blockly.utils.xml.textToDom(xml);
             console.log('[App] XML DOM created, children:', xmlDom.children.length);

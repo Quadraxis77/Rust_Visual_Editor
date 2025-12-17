@@ -197,9 +197,9 @@ Blockly.defineBlocksWithJsonArray([
         "message0": "fn %1 ( %2 ) %3 %4 %5",
         "args0": [
             { "type": "field_input", "name": "NAME", "text": "my_function" },
-            { "type": "input_value", "name": "PARAMS", "check": "Parameters" },
+            { "type": "input_value", "name": "PARAMS_OPTIONAL", "check": "Parameters" },
             { "type": "input_dummy" },
-            { "type": "input_value", "name": "RETURN_TYPE", "check": "ReturnType" },
+            { "type": "input_value", "name": "RETURN_TYPE_OPTIONAL", "check": "ReturnType" },
             { "type": "input_statement", "name": "BODY" }
         ],
         "previousStatement": "TopLevel",
@@ -208,7 +208,7 @@ Blockly.defineBlocksWithJsonArray([
         "tooltip": "Define a standard Rust function",
         "helpUrl": "",
         "mode": "rust",
-        "template": "fn {{NAME}}({{PARAMS}}) {{RETURN_TYPE}} {\n{{BODY}}\n}",
+        "template": "fn {{NAME}}({{PARAMS_OPTIONAL}}) {{RETURN_TYPE_OPTIONAL}} {\n{{BODY}}\n}",
         "typeInfo": {
             "inputs": {},
             "output": null
@@ -224,9 +224,9 @@ Blockly.defineBlocksWithJsonArray([
         "message0": "pub fn %1 ( %2 ) %3 %4 %5",
         "args0": [
             { "type": "field_input", "name": "NAME", "text": "my_function" },
-            { "type": "input_value", "name": "PARAMS", "check": "Parameters" },
+            { "type": "input_value", "name": "PARAMS_OPTIONAL", "check": "Parameters" },
             { "type": "input_dummy" },
-            { "type": "input_value", "name": "RETURN_TYPE", "check": "ReturnType" },
+            { "type": "input_value", "name": "RETURN_TYPE_OPTIONAL", "check": "ReturnType" },
             { "type": "input_statement", "name": "BODY" }
         ],
         "previousStatement": "TopLevel",
@@ -235,7 +235,7 @@ Blockly.defineBlocksWithJsonArray([
         "tooltip": "Define a public Rust function",
         "helpUrl": "",
         "mode": "rust",
-        "template": "pub fn {{NAME}}({{PARAMS}}) {{RETURN_TYPE}} {\n{{BODY}}\n}",
+        "template": "pub fn {{NAME}}({{PARAMS_OPTIONAL}}) {{RETURN_TYPE_OPTIONAL}} {\n{{BODY}}\n}",
         "typeInfo": {
             "inputs": {},
             "output": null
@@ -256,9 +256,9 @@ Blockly.defineBlocksWithJsonArray([
                 ["&mut self", "MUT_REF"],
                 ["self", "OWNED"]
             ]},
-            { "type": "input_value", "name": "PARAMS", "check": "Parameters" },
+            { "type": "input_value", "name": "PARAMS_OPTIONAL", "check": "Parameters" },
             { "type": "input_dummy" },
-            { "type": "input_value", "name": "RETURN_TYPE", "check": "ReturnType" },
+            { "type": "input_value", "name": "RETURN_TYPE_OPTIONAL", "check": "ReturnType" },
             { "type": "input_statement", "name": "BODY" }
         ],
         "colour": 20,
@@ -325,6 +325,8 @@ Blockly.defineBlocksWithJsonArray([
             { "type": "input_dummy" },
             { "type": "input_statement", "name": "METHODS" }
         ],
+        "previousStatement": "TopLevel",
+        "nextStatement": "TopLevel",
         "colour": 20,
         "tooltip": "Implementation block for a type",
         "helpUrl": "",
@@ -349,6 +351,8 @@ Blockly.defineBlocksWithJsonArray([
             { "type": "input_dummy" },
             { "type": "input_statement", "name": "METHODS" }
         ],
+        "previousStatement": "TopLevel",
+        "nextStatement": "TopLevel",
         "colour": 20,
         "tooltip": "Implement a trait for a type",
         "helpUrl": "",
@@ -376,8 +380,8 @@ Blockly.defineBlocksWithJsonArray([
             { "type": "input_dummy" },
             { "type": "input_statement", "name": "THEN" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "If statement",
         "helpUrl": "",
@@ -405,8 +409,8 @@ Blockly.defineBlocksWithJsonArray([
             { "type": "input_dummy" },
             { "type": "input_statement", "name": "ELSE" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "If-else statement",
         "helpUrl": "",
@@ -432,8 +436,8 @@ Blockly.defineBlocksWithJsonArray([
             { "type": "input_dummy" },
             { "type": "input_statement", "name": "ARMS" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "Match expression",
         "helpUrl": "",
@@ -456,8 +460,8 @@ Blockly.defineBlocksWithJsonArray([
             { "type": "field_input", "name": "PATTERN", "text": "Some(x)" },
             { "type": "input_value", "name": "EXPR" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "Match arm",
         "helpUrl": "",
@@ -481,8 +485,8 @@ Blockly.defineBlocksWithJsonArray([
             { "type": "input_dummy" },
             { "type": "input_statement", "name": "BODY" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "While loop",
         "helpUrl": "",
@@ -499,6 +503,32 @@ Blockly.defineBlocksWithJsonArray([
         }
     },
 
+    // For Loop
+    {
+        "type": "rust_for",
+        "message0": "for %1 in %2 %3 %4",
+        "args0": [
+            { "type": "field_input", "name": "VAR", "text": "i" },
+            { "type": "input_value", "name": "ITERATOR" },
+            { "type": "input_dummy" },
+            { "type": "input_statement", "name": "BODY" }
+        ],
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
+        "colour": 20,
+        "tooltip": "For loop",
+        "helpUrl": "",
+        "mode": "rust",
+        "template": "for {{VAR}} in {{ITERATOR}} {\n{{BODY}}\n}",
+        "typeInfo": {
+            "inputs": {},
+            "output": null
+        },
+        "validation": {
+            "required": ["VAR", "ITERATOR"]
+        }
+    },
+
     // Loop (infinite)
     {
         "type": "rust_loop",
@@ -507,8 +537,8 @@ Blockly.defineBlocksWithJsonArray([
             { "type": "input_dummy" },
             { "type": "input_statement", "name": "BODY" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "Infinite loop",
         "helpUrl": "",
@@ -909,8 +939,8 @@ Blockly.defineBlocksWithJsonArray([
             { "type": "input_value", "name": "TYPE", "check": "TypeAnnotation" },
             { "type": "input_value", "name": "VALUE" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "Let binding with type annotation",
         "helpUrl": "",
@@ -951,8 +981,8 @@ Blockly.defineBlocksWithJsonArray([
             { "type": "field_input", "name": "VAR", "text": "variable" },
             { "type": "input_value", "name": "VALUE" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "Assign value to variable",
         "helpUrl": "",
@@ -975,8 +1005,8 @@ Blockly.defineBlocksWithJsonArray([
             { "type": "input_value", "name": "TARGET" },
             { "type": "input_value", "name": "VALUE" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "Assignment",
         "helpUrl": "",
@@ -1006,8 +1036,8 @@ Blockly.defineBlocksWithJsonArray([
             ]},
             { "type": "input_value", "name": "VALUE" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "Compound assignment",
         "helpUrl": "",
@@ -1028,7 +1058,8 @@ Blockly.defineBlocksWithJsonArray([
         "args0": [
             { "type": "input_value", "name": "VALUE" }
         ],
-        "previousStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "Return statement",
         "helpUrl": "",
@@ -1044,7 +1075,8 @@ Blockly.defineBlocksWithJsonArray([
     {
         "type": "rust_break",
         "message0": "break",
-        "previousStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "Break from loop",
         "helpUrl": "",
@@ -1060,7 +1092,8 @@ Blockly.defineBlocksWithJsonArray([
     {
         "type": "rust_continue",
         "message0": "continue",
-        "previousStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "Continue to next iteration",
         "helpUrl": "",
@@ -1079,8 +1112,8 @@ Blockly.defineBlocksWithJsonArray([
         "args0": [
             { "type": "input_value", "name": "EXPR" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "Expression statement",
         "helpUrl": "",
@@ -1943,8 +1976,8 @@ Blockly.defineBlocksWithJsonArray([
         "args0": [
             { "type": "input_value", "name": "MESSAGE" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "Statement",
+        "nextStatement": "Statement",
         "colour": 20,
         "tooltip": "Print line macro",
         "helpUrl": "",
@@ -3609,9 +3642,9 @@ Blockly.defineBlocksWithJsonArray([
         "message0": "async fn %1 ( %2 ) %3 %4 %5",
         "args0": [
             { "type": "field_input", "name": "NAME", "text": "async_function" },
-            { "type": "input_value", "name": "PARAMS", "check": "Parameters" },
+            { "type": "input_value", "name": "PARAMS_OPTIONAL", "check": "Parameters" },
             { "type": "input_dummy" },
-            { "type": "input_value", "name": "RETURN_TYPE", "check": "ReturnType" },
+            { "type": "input_value", "name": "RETURN_TYPE_OPTIONAL", "check": "ReturnType" },
             { "type": "input_statement", "name": "BODY" }
         ],
         "colour": 20,
@@ -3711,8 +3744,8 @@ Blockly.defineBlocksWithJsonArray([
         "message0": "fn %1 ( %2 ) %3",
         "args0": [
             { "type": "field_input", "name": "NAME", "text": "method" },
-            { "type": "input_value", "name": "PARAMS", "check": "Parameters" },
-            { "type": "input_value", "name": "RETURN_TYPE", "check": "ReturnType" }
+            { "type": "input_value", "name": "PARAMS_OPTIONAL", "check": "Parameters" },
+            { "type": "input_value", "name": "RETURN_TYPE_OPTIONAL", "check": "ReturnType" }
         ],
         "previousStatement": null,
         "nextStatement": null,
@@ -3786,8 +3819,8 @@ Blockly.defineBlocksWithJsonArray([
         "args0": [
             { "type": "field_input", "name": "PATH", "text": "std::collections::HashMap" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "TopLevel",
+        "nextStatement": "TopLevel",
         "colour": 20,
         "tooltip": "Import items into scope",
         "helpUrl": "",
@@ -3801,8 +3834,8 @@ Blockly.defineBlocksWithJsonArray([
         "args0": [
             { "type": "field_input", "name": "PATH", "text": "std::collections::HashMap" }
         ],
-        "previousStatement": null,
-        "nextStatement": null,
+        "previousStatement": "TopLevel",
+        "nextStatement": "TopLevel",
         "colour": 20,
         "tooltip": "Re-export items",
         "helpUrl": "",
