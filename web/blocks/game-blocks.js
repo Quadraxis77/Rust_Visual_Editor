@@ -357,6 +357,100 @@ Blockly.defineBlocksWithJsonArray([
         mode: "bevy"
     },
 
+    {
+        type: "game_delta_time",
+        message0: "delta time",
+        output: "Number",
+        colour: 210,
+        tooltip: "Get time since last frame in seconds",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_fps",
+        message0: "frames per second",
+        output: "Number",
+        colour: 210,
+        tooltip: "Get current FPS (frames per second)",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_set_time_scale",
+        message0: "set time scale to %1",
+        args0: [
+            { type: "input_value", name: "SCALE", check: "Number" }
+        ],
+        previousStatement: null,
+        nextStatement: null,
+        colour: 210,
+        tooltip: "Set game speed (1.0 = normal, 0.5 = half speed, 2.0 = double speed)",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_time_scale",
+        message0: "time scale",
+        output: "Number",
+        colour: 210,
+        tooltip: "Get current time scale",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_pause_time",
+        message0: "pause time",
+        previousStatement: null,
+        nextStatement: null,
+        colour: 210,
+        tooltip: "Pause game time (set time scale to 0)",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_resume_time",
+        message0: "resume time",
+        previousStatement: null,
+        nextStatement: null,
+        colour: 210,
+        tooltip: "Resume game time (set time scale to 1.0)",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_set_max_fps",
+        message0: "set max FPS to %1",
+        args0: [
+            { type: "input_value", name: "FPS", check: "Number" }
+        ],
+        previousStatement: null,
+        nextStatement: null,
+        colour: 210,
+        tooltip: "Set maximum frames per second (0 = unlimited)",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_set_fixed_timestep",
+        message0: "set fixed timestep to %1 per second",
+        args0: [
+            { type: "input_value", name: "RATE", check: "Number" }
+        ],
+        previousStatement: null,
+        nextStatement: null,
+        colour: 210,
+        tooltip: "Set fixed update rate (e.g., 60 for 60 updates per second)",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
     // ============================================================================
     // APPEARANCE & EFFECTS
     // ============================================================================
@@ -541,6 +635,8 @@ Blockly.defineBlocksWithJsonArray([
             { type: "input_dummy" },
             { type: "input_statement", name: "DO" }
         ],
+        previousStatement: "TopLevel",
+        nextStatement: "TopLevel",
         colour: 210,
         tooltip: "Run code when game starts",
         helpUrl: "",
@@ -554,6 +650,8 @@ Blockly.defineBlocksWithJsonArray([
             { type: "input_dummy" },
             { type: "input_statement", name: "DO" }
         ],
+        previousStatement: "TopLevel",
+        nextStatement: "TopLevel",
         colour: 210,
         tooltip: "Run code every frame (Update)",
         helpUrl: "",
@@ -575,16 +673,152 @@ Blockly.defineBlocksWithJsonArray([
     },
 
     {
-        type: "game_repeat_forever",
-        message0: "forever %1 %2",
+        type: "game_repeat",
+        message0: "repeat %1 times %2 %3",
         args0: [
+            { type: "input_value", name: "TIMES", check: "Number" },
             { type: "input_dummy" },
             { type: "input_statement", name: "DO" }
         ],
         previousStatement: null,
         nextStatement: null,
         colour: 210,
-        tooltip: "Repeat code forever",
+        tooltip: "Repeat code a specific number of times",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_repeat_until",
+        message0: "repeat until %1 %2 %3",
+        args0: [
+            { type: "input_value", name: "CONDITION", check: "Boolean" },
+            { type: "input_dummy" },
+            { type: "input_statement", name: "DO" }
+        ],
+        previousStatement: null,
+        nextStatement: null,
+        colour: 210,
+        tooltip: "Repeat code until condition is true",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_if_then",
+        message0: "if %1 then %2 %3",
+        args0: [
+            { type: "input_value", name: "CONDITION", check: "Boolean" },
+            { type: "input_dummy" },
+            { type: "input_statement", name: "DO" }
+        ],
+        previousStatement: null,
+        nextStatement: null,
+        colour: 210,
+        tooltip: "Execute code if condition is true",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_if_then_else",
+        message0: "if %1 then %2 %3 else %4 %5",
+        args0: [
+            { type: "input_value", name: "CONDITION", check: "Boolean" },
+            { type: "input_dummy" },
+            { type: "input_statement", name: "DO" },
+            { type: "input_dummy" },
+            { type: "input_statement", name: "ELSE" }
+        ],
+        previousStatement: null,
+        nextStatement: null,
+        colour: 210,
+        tooltip: "Execute code based on condition",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_when_key_pressed",
+        message0: "when %1 key pressed %2 %3",
+        args0: [
+            { type: "field_dropdown", name: "KEY", options: [
+                ["space", "Space"],
+                ["↑ up arrow", "ArrowUp"],
+                ["↓ down arrow", "ArrowDown"],
+                ["← left arrow", "ArrowLeft"],
+                ["→ right arrow", "ArrowRight"],
+                ["W", "KeyW"],
+                ["A", "KeyA"],
+                ["S", "KeyS"],
+                ["D", "KeyD"],
+                ["Enter", "Enter"],
+                ["Escape", "Escape"]
+            ]},
+            { type: "input_dummy" },
+            { type: "input_statement", name: "DO" }
+        ],
+        previousStatement: "TopLevel",
+        nextStatement: "TopLevel",
+        colour: 210,
+        tooltip: "Run system when specific key is pressed",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_on_timer",
+        message0: "every %1 seconds %2 %3",
+        args0: [
+            { type: "input_value", name: "INTERVAL", check: "Number" },
+            { type: "input_dummy" },
+            { type: "input_statement", name: "DO" }
+        ],
+        previousStatement: "TopLevel",
+        nextStatement: "TopLevel",
+        colour: 210,
+        tooltip: "Run code at regular intervals",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_stop_script",
+        message0: "stop this script",
+        previousStatement: null,
+        nextStatement: null,
+        colour: 210,
+        tooltip: "Exit current system early",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_broadcast",
+        message0: "broadcast %1",
+        args0: [
+            { type: "field_input", name: "MESSAGE", text: "GameEvent" }
+        ],
+        previousStatement: null,
+        nextStatement: null,
+        colour: 210,
+        tooltip: "Send event to all listeners",
+        helpUrl: "",
+        mode: "bevy"
+    },
+
+    {
+        type: "game_when_receive",
+        message0: "when I receive %1 %2 %3",
+        args0: [
+            { type: "field_input", name: "MESSAGE", text: "GameEvent" },
+            { type: "input_dummy" },
+            { type: "input_statement", name: "DO" }
+        ],
+        previousStatement: "TopLevel",
+        nextStatement: "TopLevel",
+        colour: 210,
+        tooltip: "Run code when event is received",
         helpUrl: "",
         mode: "bevy"
     },

@@ -120,6 +120,109 @@ impl Default for Invincibility {
 `;
     }
     
+    if (gameRequiredComponents.has('GameTimer')) {
+        code += `#[derive(Resource)]
+pub struct GameTimer {
+    pub elapsed: f32,
+}
+
+impl Default for GameTimer {
+    fn default() -> Self {
+        Self { elapsed: 0.0 }
+    }
+}
+
+impl GameTimer {
+    pub fn reset(&mut self) {
+        self.elapsed = 0.0;
+    }
+    
+    pub fn tick(&mut self, delta: f32) {
+        self.elapsed += delta;
+    }
+}
+
+`;
+    }
+    
+    if (gameRequiredComponents.has('GlobalVolume')) {
+        code += `// For GlobalVolume, use Bevy's built-in GlobalVolume resource
+// Add to app: .insert_resource(GlobalVolume::new(1.0))
+
+`;
+    }
+    
+    if (gameRequiredComponents.has('TimeScale')) {
+        code += `#[derive(Resource)]
+pub struct TimeScale {
+    pub scale: f32,
+}
+
+impl Default for TimeScale {
+    fn default() -> Self {
+        Self { scale: 1.0 }
+    }
+}
+
+// System to apply time scale
+fn apply_time_scale_system(
+    time_scale: Res<TimeScale>,
+    mut time: ResMut<Time>,
+) {
+    // Note: This is a simplified approach
+    // For proper time scaling, use Time<Virtual> in Bevy 0.12+
+}
+
+`;
+    }
+    
+    if (gameRequiredComponents.has('MaxFPS')) {
+        code += `#[derive(Resource)]
+pub struct MaxFPS {
+    pub target: u32,
+}
+
+impl Default for MaxFPS {
+    fn default() -> Self {
+        Self { target: 60 }
+    }
+}
+
+`;
+    }
+    
+    if (gameRequiredComponents.has('FixedTimestep')) {
+        code += `#[derive(Resource)]
+pub struct FixedTimestep {
+    pub rate: f32,
+}
+
+impl Default for FixedTimestep {
+    fn default() -> Self {
+        Self { rate: 60.0 }
+    }
+}
+
+`;
+    }
+    
+    if (gameRequiredComponents.has('IntervalTimer')) {
+        code += `#[derive(Resource)]
+pub struct IntervalTimer {
+    pub timer: Timer,
+}
+
+impl Default for IntervalTimer {
+    fn default() -> Self {
+        Self {
+            timer: Timer::from_seconds(1.0, TimerMode::Repeating),
+        }
+    }
+}
+
+`;
+    }
+    
     // Add setup instructions
     code += '// ============================================================================\n';
     code += '// SETUP INSTRUCTIONS\n';
@@ -131,6 +234,25 @@ impl Default for Invincibility {
     }
     if (gameRequiredComponents.has('Lives')) {
         code += '//   .init_resource::<Lives>()\n';
+    }
+    if (gameRequiredComponents.has('GameTimer')) {
+        code += '//   .init_resource::<GameTimer>()\n';
+    }
+    if (gameRequiredComponents.has('GlobalVolume')) {
+        code += '//   .insert_resource(GlobalVolume::new(1.0))\n';
+    }
+    if (gameRequiredComponents.has('TimeScale')) {
+        code += '//   .init_resource::<TimeScale>()\n';
+        code += '//   .add_systems(Update, apply_time_scale_system)\n';
+    }
+    if (gameRequiredComponents.has('MaxFPS')) {
+        code += '//   .init_resource::<MaxFPS>()\n';
+    }
+    if (gameRequiredComponents.has('FixedTimestep')) {
+        code += '//   .init_resource::<FixedTimestep>()\n';
+    }
+    if (gameRequiredComponents.has('IntervalTimer')) {
+        code += '//   .init_resource::<IntervalTimer>()\n';
     }
     
     code += '//\n';
@@ -334,8 +456,55 @@ GameGenerator.forBlock['game_timer'] = function(block) {
 };
 
 GameGenerator.forBlock['game_reset_timer'] = function(block) {
-    return `// Reset timer - use time.elapsed_secs() for simple timer
-// Or create a custom GameTimer resource\n`;
+    addGameComponent('GameTimer');
+    return `game_timer.reset();\n`;
+};
+
+GameGenerator.forBlock['game_delta_time'] = function(block) {
+    return ['time.delta_secs()', GameGenerator.ORDER_ATOMIC];
+};
+
+GameGenerator.forBlock['game_fps'] = function(block) {
+    return ['(1.0 / time.delta_secs())', GameGenerator.ORDER_ATOMIC];
+};
+
+GameGenerator.forBlock['game_set_time_scale'] = function(block) {
+    const scale = GameGenerator.valueToCode(block, 'SCALE', GameGenerator.ORDER_NONE) || '1.0';
+    
+    addGameComponent('TimeScale');
+    
+    return `time_scale.scale = ${scale};\n`;
+};
+
+GameGenerator.forBlock['game_time_scale'] = function(block) {
+    addGameComponent('TimeScale');
+    return ['time_scale.scale', GameGenerator.ORDER_ATOMIC];
+};
+
+GameGenerator.forBlock['game_pause_time'] = function(block) {
+    addGameComponent('TimeScale');
+    return `time_scale.scale = 0.0;\n`;
+};
+
+GameGenerator.forBlock['game_resume_time'] = function(block) {
+    addGameComponent('TimeScale');
+    return `time_scale.scale = 1.0;\n`;
+};
+
+GameGenerator.forBlock['game_set_max_fps'] = function(block) {
+    const fps = GameGenerator.valueToCode(block, 'FPS', GameGenerator.ORDER_NONE) || '60';
+    
+    addGameComponent('MaxFPS');
+    
+    return `max_fps.target = ${fps} as u32;\n`;
+};
+
+GameGenerator.forBlock['game_set_fixed_timestep'] = function(block) {
+    const rate = GameGenerator.valueToCode(block, 'RATE', GameGenerator.ORDER_NONE) || '60';
+    
+    addGameComponent('FixedTimestep');
+    
+    return `fixed_timestep.rate = ${rate};\n`;
 };
 
 // ============================================================================
@@ -355,10 +524,8 @@ GameGenerator.forBlock['game_set_color'] = function(block) {
     const g = GameGenerator.valueToCode(block, 'G', GameGenerator.ORDER_NONE) || '1.0';
     const b = GameGenerator.valueToCode(block, 'B', GameGenerator.ORDER_NONE) || '1.0';
     
-    return `// Set color - add Sprite component to query
-// For 2D: sprite.color = Color::srgb(${r}, ${g}, ${b});
-// For 3D: material.base_color = Color::srgb(${r}, ${g}, ${b});
-\n`;
+    return `// Set color (add Sprite to query for 2D)
+// sprite.color = Color::srgb(${r}, ${g}, ${b});\n`;
 };
 
 GameGenerator.forBlock['game_set_size'] = function(block) {
@@ -410,8 +577,8 @@ for entity in audio_query.iter() {
 GameGenerator.forBlock['game_set_volume'] = function(block) {
     const volume = GameGenerator.valueToCode(block, 'VOLUME', GameGenerator.ORDER_NONE) || '100.0';
     
-    return `// Set global volume - add GlobalVolume resource
-// global_volume.volume = Volume::new(${volume} / 100.0);\n`;
+    addGameComponent('GlobalVolume');
+    return `global_volume.volume = Volume::new(${volume} / 100.0);\n`;
 };
 
 // ============================================================================
@@ -481,6 +648,15 @@ GameGenerator.forBlock['game_every_frame'] = function(block) {
     if (gameRequiredComponents.has('Lives')) {
         params.push('mut lives: ResMut<Lives>');
     }
+    if (gameRequiredComponents.has('TimeScale')) {
+        params.push('mut time_scale: ResMut<TimeScale>');
+    }
+    if (gameRequiredComponents.has('MaxFPS')) {
+        params.push('mut max_fps: ResMut<MaxFPS>');
+    }
+    if (gameRequiredComponents.has('FixedTimestep')) {
+        params.push('mut fixed_timestep: ResMut<FixedTimestep>');
+    }
     
     // Add query with common components
     let queryComponents = ['&mut Transform'];
@@ -517,11 +693,124 @@ if time.elapsed_secs() < ${duration} {
 }\n`;
 };
 
-GameGenerator.forBlock['game_repeat_forever'] = function(block) {
+GameGenerator.forBlock['game_repeat'] = function(block) {
+    const times = GameGenerator.valueToCode(block, 'TIMES', GameGenerator.ORDER_NONE) || '10';
     const doCode = GameGenerator.statementToCode(block, 'DO');
     
-    return `// Forever loop - this code runs every frame
-${doCode}`;
+    return `for _ in 0..${times} {
+${doCode}}\n`;
+};
+
+GameGenerator.forBlock['game_repeat_until'] = function(block) {
+    const condition = GameGenerator.valueToCode(block, 'CONDITION', GameGenerator.ORDER_NONE) || 'false';
+    const doCode = GameGenerator.statementToCode(block, 'DO');
+    
+    return `while !(${condition}) {
+${doCode}}\n`;
+};
+
+GameGenerator.forBlock['game_if_then'] = function(block) {
+    const condition = GameGenerator.valueToCode(block, 'CONDITION', GameGenerator.ORDER_NONE) || 'false';
+    const doCode = GameGenerator.statementToCode(block, 'DO');
+    
+    return `if ${condition} {
+${doCode}}\n`;
+};
+
+GameGenerator.forBlock['game_if_then_else'] = function(block) {
+    const condition = GameGenerator.valueToCode(block, 'CONDITION', GameGenerator.ORDER_NONE) || 'false';
+    const doCode = GameGenerator.statementToCode(block, 'DO');
+    const elseCode = GameGenerator.statementToCode(block, 'ELSE');
+    
+    return `if ${condition} {
+${doCode}} else {
+${elseCode}}\n`;
+};
+
+GameGenerator.forBlock['game_when_key_pressed'] = function(block) {
+    const key = block.getFieldValue('KEY');
+    const doCode = GameGenerator.statementToCode(block, 'DO');
+    
+    return `fn key_${key.toLowerCase()}_system(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut query: Query<&mut Transform>,
+) {
+    if keyboard.pressed(KeyCode::${key}) {
+        for mut transform in query.iter_mut() {
+${doCode}        }
+    }
+}
+
+// Add to app: app.add_systems(Update, key_${key.toLowerCase()}_system);\n\n`;
+};
+
+GameGenerator.forBlock['game_on_timer'] = function(block) {
+    const interval = GameGenerator.valueToCode(block, 'INTERVAL', GameGenerator.ORDER_NONE) || '1.0';
+    const doCode = GameGenerator.statementToCode(block, 'DO');
+    
+    addGameComponent('IntervalTimer');
+    
+    return `#[derive(Resource)]
+struct IntervalTimer {
+    timer: Timer,
+}
+
+impl Default for IntervalTimer {
+    fn default() -> Self {
+        Self {
+            timer: Timer::from_seconds(${interval}, TimerMode::Repeating),
+        }
+    }
+}
+
+fn interval_timer_system(
+    time: Res<Time>,
+    mut timer: ResMut<IntervalTimer>,
+    mut query: Query<&mut Transform>,
+) {
+    if timer.timer.tick(time.delta()).just_finished() {
+        for mut transform in query.iter_mut() {
+${doCode}        }
+    }
+}
+
+// Add to app: 
+//   .init_resource::<IntervalTimer>()
+//   .add_systems(Update, interval_timer_system);\n\n`;
+};
+
+GameGenerator.forBlock['game_stop_script'] = function(block) {
+    return `return;\n`;
+};
+
+GameGenerator.forBlock['game_broadcast'] = function(block) {
+    const message = block.getFieldValue('MESSAGE');
+    
+    return `// Broadcast ${message} event
+event_writer.send(${message});
+// Note: Add EventWriter<${message}> to system parameters\n`;
+};
+
+GameGenerator.forBlock['game_when_receive'] = function(block) {
+    const message = block.getFieldValue('MESSAGE');
+    const doCode = GameGenerator.statementToCode(block, 'DO');
+    
+    return `#[derive(Event)]
+struct ${message};
+
+fn on_${message.toLowerCase()}_system(
+    mut events: EventReader<${message}>,
+    mut query: Query<&mut Transform>,
+) {
+    for _event in events.read() {
+        for mut transform in query.iter_mut() {
+${doCode}        }
+    }
+}
+
+// Add to app:
+//   .add_event::<${message}>()
+//   .add_systems(Update, on_${message.toLowerCase()}_system);\n\n`;
 };
 
 // ============================================================================

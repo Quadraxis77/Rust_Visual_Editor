@@ -119,6 +119,16 @@ const BevyToolbox = {
                                 { kind: "label", text: "Timer" },
                                 { kind: "block", type: "game_timer" },
                                 { kind: "block", type: "game_reset_timer" },
+                                { kind: "label", text: "Time Control" },
+                                { kind: "block", type: "game_delta_time" },
+                                { kind: "block", type: "game_fps" },
+                                { kind: "block", type: "game_set_time_scale" },
+                                { kind: "block", type: "game_time_scale" },
+                                { kind: "block", type: "game_pause_time" },
+                                { kind: "block", type: "game_resume_time" },
+                                { kind: "label", text: "Performance" },
+                                { kind: "block", type: "game_set_max_fps" },
+                                { kind: "block", type: "game_set_fixed_timestep" },
                                 { kind: "label", text: "Levels" },
                                 { kind: "block", type: "game_load_level" },
                                 { kind: "block", type: "game_next_level" },
@@ -268,10 +278,24 @@ const BevyToolbox = {
                             name: "Control",
                             colour: 210,
                             contents: [
+                                { kind: "label", text: "System Triggers" },
                                 { kind: "block", type: "game_when_game_starts" },
                                 { kind: "block", type: "game_every_frame" },
+                                { kind: "block", type: "game_when_key_pressed" },
+                                { kind: "block", type: "game_on_timer" },
+                                { kind: "label", text: "Conditionals" },
+                                { kind: "block", type: "game_if_then" },
+                                { kind: "block", type: "game_if_then_else" },
+                                { kind: "label", text: "Loops" },
+                                { kind: "block", type: "game_repeat" },
+                                { kind: "block", type: "game_repeat_until" },
+                                { kind: "label", text: "Timing" },
                                 { kind: "block", type: "game_wait_seconds" },
-                                { kind: "block", type: "game_repeat_forever" }
+                                { kind: "label", text: "Events" },
+                                { kind: "block", type: "game_broadcast" },
+                                { kind: "block", type: "game_when_receive" },
+                                { kind: "label", text: "Flow Control" },
+                                { kind: "block", type: "game_stop_script" }
                             ]
                         }
                     ]

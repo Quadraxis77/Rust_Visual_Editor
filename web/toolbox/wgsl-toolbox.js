@@ -18,7 +18,7 @@ const WgslToolbox = {
                     name: "Files",
                     colour: 270,
                     contents: [
-                        { kind: "block", type: "file_container" }
+                        { kind: "block", type: "wgsl_file_container" }
                     ]
                 },
 

@@ -154,6 +154,17 @@ function validateWgslSyntax(code) {
 }
 
 // ============================================================================
+// FILE ORGANIZATION GENERATORS
+// ============================================================================
+
+WgslGenerator.forBlock['wgsl_file_container'] = function(block) {
+    // File container doesn't generate code itself
+    // It just organizes blocks - the multi-file generator handles it
+    const contents = WgslGenerator.statementToCode(block, 'CONTENTS');
+    return contents;
+};
+
+// ============================================================================
 // SHADER ENTRY POINT GENERATORS
 // ============================================================================
 

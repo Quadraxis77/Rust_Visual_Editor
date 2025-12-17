@@ -282,9 +282,9 @@ class MultiFileGenerator {
                 continue;
             }
             
-            // Check if this is a file_container block
-            if (block.type === 'file_container') {
-                const filename = block.getFieldValue('FILENAME') || 'untitled.rs';
+            // Check if this is a file_container or wgsl_file_container block
+            if (block.type === 'file_container' || block.type === 'wgsl_file_container') {
+                const filename = block.getFieldValue('FILENAME') || (block.type === 'wgsl_file_container' ? 'untitled.wgsl' : 'untitled.rs');
                 
                 // Check for duplicate filenames
                 if (fileContainerNames.has(filename)) {

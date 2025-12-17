@@ -4,6 +4,34 @@
 
 Blockly.defineBlocksWithJsonArray([
     // ============================================================================
+    // FILE ORGANIZATION
+    // ============================================================================
+
+    {
+        "type": "wgsl_file_container",
+        "message0": "🎨 WGSL Shader: %1 %2 %3",
+        "args0": [
+            { "type": "field_input", "name": "FILENAME", "text": "shader.wgsl" },
+            { "type": "input_dummy" },
+            { "type": "input_statement", "name": "CONTENTS", "check": "TopLevel" }
+        ],
+        "colour": 270,
+        "tooltip": "WGSL shader file container. All shader code goes inside this block.",
+        "helpUrl": "",
+        "mode": "wgsl",
+        "typeInfo": {
+            "inputs": {},
+            "output": null
+        },
+        "validation": {
+            "required": ["FILENAME"],
+            "constraints": {
+                "FILENAME": { "pattern": /^[a-zA-Z0-9_-]+\.wgsl$/ }
+            }
+        }
+    },
+
+    // ============================================================================
     // SHADER ENTRY POINTS
     // ============================================================================
 
