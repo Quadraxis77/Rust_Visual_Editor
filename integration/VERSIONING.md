@@ -71,9 +71,9 @@ During initial development (0.x.x):
    cargo publish
    ```
 
-## Current Version: 0.1.0
+## Current Version: 0.2.0
 
-This is the initial release. The API is not yet stable.
+This version adds comprehensive game development blocks (100+ blocks) for Bevy game engine. The API is not yet stable.
 
 ## Planned Milestones
 
