@@ -397,7 +397,7 @@ class MultiFileGenerator {
         // Check block type prefix
         if (blockType.startsWith('wgsl_')) {
             return 'wgsl';
-        } else if (blockType.startsWith('bevy_')) {
+        } else if (blockType.startsWith('bevy_') || blockType.startsWith('game_')) {
             return 'bevy';
         } else if (blockType.startsWith('bio_')) {
             return 'biospheres';

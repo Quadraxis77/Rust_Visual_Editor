@@ -32,6 +32,251 @@ const BevyToolbox = {
                     ]
                 },
                 
+                // Game Development (Scratch-like)
+                {
+                    kind: "category",
+                    name: "🎮 Game Blocks",
+                    colour: 210,
+                    contents: [
+                        {
+                            kind: "category",
+                            name: "Movement",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_move_forward" },
+                                { kind: "block", type: "game_move_to" },
+                                { kind: "block", type: "game_glide_to" },
+                                { kind: "block", type: "game_turn_degrees" },
+                                { kind: "block", type: "game_point_direction" },
+                                { kind: "block", type: "game_point_towards" },
+                                { kind: "block", type: "game_change_position" },
+                                { kind: "block", type: "game_set_velocity" },
+                                { kind: "label", text: "Advanced" },
+                                { kind: "block", type: "game_dash" },
+                                { kind: "block", type: "game_jump" },
+                                { kind: "block", type: "game_double_jump" },
+                                { kind: "block", type: "game_wall_jump" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Position",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_position_x" },
+                                { kind: "block", type: "game_position_y" },
+                                { kind: "block", type: "game_position_z" },
+                                { kind: "block", type: "game_direction" },
+                                { kind: "block", type: "game_distance_to" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Input",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_key_pressed" },
+                                { kind: "block", type: "game_key_just_pressed" },
+                                { kind: "block", type: "game_mouse_button_pressed" },
+                                { kind: "block", type: "game_mouse_position" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Collision",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_touching" },
+                                { kind: "block", type: "game_on_collision" },
+                                { kind: "block", type: "game_is_grounded" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Health & Damage",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_health" },
+                                { kind: "block", type: "game_max_health" },
+                                { kind: "block", type: "game_take_damage" },
+                                { kind: "block", type: "game_heal" },
+                                { kind: "block", type: "game_set_health" },
+                                { kind: "block", type: "game_is_dead" },
+                                { kind: "block", type: "game_invincible" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Game State",
+                            colour: 210,
+                            contents: [
+                                { kind: "label", text: "Score & Lives" },
+                                { kind: "block", type: "game_score" },
+                                { kind: "block", type: "game_change_score" },
+                                { kind: "block", type: "game_set_score" },
+                                { kind: "block", type: "game_lives" },
+                                { kind: "block", type: "game_change_lives" },
+                                { kind: "label", text: "Timer" },
+                                { kind: "block", type: "game_timer" },
+                                { kind: "block", type: "game_reset_timer" },
+                                { kind: "label", text: "Levels" },
+                                { kind: "block", type: "game_load_level" },
+                                { kind: "block", type: "game_next_level" },
+                                { kind: "block", type: "game_restart_level" },
+                                { kind: "label", text: "Pause" },
+                                { kind: "block", type: "game_pause" },
+                                { kind: "block", type: "game_resume" },
+                                { kind: "block", type: "game_is_paused" },
+                                { kind: "label", text: "End States" },
+                                { kind: "block", type: "game_game_over" },
+                                { kind: "block", type: "game_win" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Appearance",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_show" },
+                                { kind: "block", type: "game_hide" },
+                                { kind: "block", type: "game_set_color" },
+                                { kind: "block", type: "game_set_size" },
+                                { kind: "block", type: "game_change_size" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Animation",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_animate_property" },
+                                { kind: "block", type: "game_play_animation" },
+                                { kind: "block", type: "game_stop_animation" },
+                                { kind: "block", type: "game_animation_speed" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Camera",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_camera_follow" },
+                                { kind: "block", type: "game_camera_shake" },
+                                { kind: "block", type: "game_camera_zoom" },
+                                { kind: "block", type: "game_camera_bounds" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Particles & Effects",
+                            colour: 210,
+                            contents: [
+                                { kind: "label", text: "Particles" },
+                                { kind: "block", type: "game_spawn_particles" },
+                                { kind: "block", type: "game_particle_trail" },
+                                { kind: "label", text: "Screen Effects" },
+                                { kind: "block", type: "game_screen_flash" },
+                                { kind: "block", type: "game_slow_motion" },
+                                { kind: "block", type: "game_freeze_frame" },
+                                { kind: "block", type: "game_pulse_size" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Sound",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_play_sound" },
+                                { kind: "block", type: "game_play_sound_until_done" },
+                                { kind: "block", type: "game_stop_all_sounds" },
+                                { kind: "block", type: "game_set_volume" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Physics",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_apply_force" },
+                                { kind: "block", type: "game_apply_impulse" },
+                                { kind: "block", type: "game_set_gravity" },
+                                { kind: "block", type: "game_bounce" },
+                                { kind: "block", type: "game_friction" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "AI & Behavior",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_move_towards" },
+                                { kind: "block", type: "game_follow_entity" },
+                                { kind: "block", type: "game_flee_from" },
+                                { kind: "block", type: "game_patrol" },
+                                { kind: "block", type: "game_wander" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Spawning",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_spawn_entity" },
+                                { kind: "block", type: "game_spawn_wave" },
+                                { kind: "block", type: "game_spawn_at_random" },
+                                { kind: "block", type: "game_destroy_self" },
+                                { kind: "block", type: "game_destroy_entity" },
+                                { kind: "block", type: "game_count_entities" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Inventory",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_add_item" },
+                                { kind: "block", type: "game_remove_item" },
+                                { kind: "block", type: "game_has_item" },
+                                { kind: "block", type: "game_item_count" },
+                                { kind: "block", type: "game_clear_inventory" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "UI & HUD",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_show_text" },
+                                { kind: "block", type: "game_show_notification" },
+                                { kind: "block", type: "game_update_hud" },
+                                { kind: "block", type: "game_show_healthbar" },
+                                { kind: "block", type: "game_hide_healthbar" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Random & Math",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_random_range" },
+                                { kind: "block", type: "game_random_chance" },
+                                { kind: "block", type: "game_pick_random" }
+                            ]
+                        },
+                        {
+                            kind: "category",
+                            name: "Control",
+                            colour: 210,
+                            contents: [
+                                { kind: "block", type: "game_when_game_starts" },
+                                { kind: "block", type: "game_every_frame" },
+                                { kind: "block", type: "game_wait_seconds" },
+                                { kind: "block", type: "game_repeat_forever" }
+                            ]
+                        }
+                    ]
+                },
+                
                 // App & Plugins
                 {
                     kind: "category",
@@ -327,3 +572,4 @@ const BevyToolbox = {
         };
     }
 };
+
