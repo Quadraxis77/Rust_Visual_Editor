@@ -1,6 +1,6 @@
 # 🦀 Rust Visual Editor
 
-**Version 0.2.1**
+**Version 0.2.2**
 
 A visual programming environment for Rust, WGSL, and Bevy built with Blockly.
 

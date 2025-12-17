@@ -16,7 +16,7 @@
 // ========== GLOBAL STATE ==========
 
 // Debug mode - set to false to disable console logging
-const DEBUG_MODE = false;
+const DEBUG_MODE = true;
 
 // Override console methods if debug mode is off
 if (!DEBUG_MODE) {
@@ -1598,29 +1598,84 @@ async function importCodeFiles(files) {
         if (fileContents.size === 1) {
             // Single file import
             const [filename, code] = fileContents.entries().next().value;
+            console.log('[App] Importing single file:', filename, 'code length:', code.length);
+            
             const mode = parser.detectModeFromFilename(filename);
+            console.log('[App] Detected mode:', mode);
             
             updateProgressIndicator(progressIndicator, `Parsing ${filename}...`, 70);
             
             const blocks = parser.parse(code, mode);
+            console.log('[App] Parser returned', blocks.length, 'blocks');
             
             if (parser.hasErrors()) {
                 console.warn('[App] Parse errors:', parser.getErrors());
                 showParseErrors(parser.getErrors());
             }
             
+            if (blocks.length === 0) {
+                console.warn('[App] No blocks were parsed from the file!');
+                hideProgressIndicator(progressIndicator);
+                showNotification(`No blocks could be parsed from ${filename}. The file may be empty or contain unsupported syntax.`, 'warning');
+                return;
+            }
+            
+            // Filter out blocks with undefined types and convert incompatible blocks
+            const fileExtension = filename.split('.').pop();
+            const validBlocks = blocks.map(block => {
+                const isDefined = typeof Blockly.Blocks[block.type] !== 'undefined';
+                if (!isDefined) {
+                    console.warn('[App] Converting undefined block type to comment:', block.type);
+                    // Convert to comment block
+                    return {
+                        type: 'rust_comment',
+                        id: block.id,
+                        fields: {
+                            TEXT: `[Imported ${block.type}] - block type not available`
+                        }
+                    };
+                }
+                
+                // Convert WGSL blocks to comments in Rust files (preserve the code)
+                if (fileExtension === 'rs' && block.type.startsWith('wgsl_')) {
+                    console.warn('[App] Converting WGSL block to comment in Rust file:', block.type);
+                    return {
+                        type: 'rust_comment',
+                        id: block.id,
+                        fields: {
+                            TEXT: `[WGSL code] - ${block.type}`
+                        }
+                    };
+                }
+                
+                // Convert Rust blocks to comments in WGSL files
+                if (fileExtension === 'wgsl' && (block.type.startsWith('rust_') || block.type.startsWith('bevy_'))) {
+                    console.warn('[App] Converting Rust/Bevy block to comment in WGSL file:', block.type);
+                    return {
+                        type: 'wgsl_comment',
+                        id: block.id,
+                        fields: {
+                            TEXT: `[Rust code] - ${block.type}`
+                        }
+                    };
+                }
+                
+                return block;
+            });
+            
+            console.log('[App] Processed blocks:', blocks.length, '->', validBlocks.length);
+            
+            if (validBlocks.length === 0) {
+                hideProgressIndicator(progressIndicator);
+                showNotification(`No valid blocks could be imported from ${filename}. The file may contain unsupported block types.`, 'warning');
+                return;
+            }
+            
             updateProgressIndicator(progressIndicator, 'Creating blocks...', 80);
             
             // Convert to XML and load into workspace
-            const xml = parser.blocksToXml(blocks, filename);
+            const xml = parser.blocksToXml(validBlocks, filename);
             console.log('[App] Generated XML:', xml.substring(0, 500) + '...');
-            
-            // Check if block types are defined
-            console.log('[App] Checking block types...');
-            console.log('[App] file_container defined?', typeof Blockly.Blocks['file_container'] !== 'undefined');
-            console.log('[App] rust_use defined?', typeof Blockly.Blocks['rust_use'] !== 'undefined');
-            console.log('[App] rust_main defined?', typeof Blockly.Blocks['rust_main'] !== 'undefined');
-            console.log('[App] rust_function defined?', typeof Blockly.Blocks['rust_function'] !== 'undefined');
             
             const xmlDom = Blockly.utils.xml.textToDom(xml);
             console.log('[App] XML DOM created, children:', xmlDom.children.length);

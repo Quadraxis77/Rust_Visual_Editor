@@ -27,6 +27,7 @@ class MultiModeCodeParser {
         this.references.clear();
         
         console.log(`[MultiModeCodeParser] parse() called with mode: ${mode}, code length: ${code.length}`);
+        console.log(`[MultiModeCodeParser] First 200 chars of code:`, code.substring(0, 200));
         
         try {
             // Auto-detect mode if not specified
@@ -126,16 +127,8 @@ class MultiModeCodeParser {
         const blocks = [];
         
         // Try all parsers and collect blocks from each
-        // Priority order: Biospheres > Bevy > WGSL > Rust
-        
-        try {
-            // Parse Biospheres-specific constructs first (most specific)
-            const bioBlocks = this.biospheresParser.parse(code);
-            blocks.push(...bioBlocks);
-            console.log(`[MultiModeCodeParser] Found ${bioBlocks.length} Biospheres blocks`);
-        } catch (error) {
-            console.warn('[MultiModeCodeParser] Biospheres parser error:', error);
-        }
+        // Priority order: Bevy > WGSL > Rust
+        // Note: Biospheres is just Rust/Bevy code, so we don't need a separate parser
         
         try {
             // Parse Bevy-specific constructs
@@ -146,17 +139,23 @@ class MultiModeCodeParser {
             console.warn('[MultiModeCodeParser] Bevy parser error:', error);
         }
         
-        try {
-            // Parse WGSL-specific constructs
-            const wgslBlocks = this.wgslParser.parse(code);
-            blocks.push(...wgslBlocks);
-            console.log(`[MultiModeCodeParser] Found ${wgslBlocks.length} WGSL blocks`);
-        } catch (error) {
-            console.warn('[MultiModeCodeParser] WGSL parser error:', error);
+        // Only parse WGSL if we detect actual WGSL shader code
+        // (not just Rust code that happens to have similar keywords)
+        if (code.includes('@compute') || code.includes('@vertex') || code.includes('@fragment')) {
+            try {
+                // Parse WGSL-specific constructs
+                const wgslBlocks = this.wgslParser.parse(code);
+                blocks.push(...wgslBlocks);
+                console.log(`[MultiModeCodeParser] Found ${wgslBlocks.length} WGSL blocks`);
+            } catch (error) {
+                console.warn('[MultiModeCodeParser] WGSL parser error:', error);
+            }
+        } else {
+            console.log(`[MultiModeCodeParser] Skipping WGSL parser (no shader entry points detected)`);
         }
         
         try {
-            // Parse general Rust constructs (least specific, catches everything else)
+            // Parse general Rust constructs (catches everything else)
             const rustBlocks = this.rustParser.parse(code);
             // Filter out blocks that were already captured by more specific parsers
             const uniqueRustBlocks = this.filterDuplicateBlocks(rustBlocks, blocks);
@@ -476,21 +475,33 @@ class RustParser {
     }
     
     parse(code) {
+        console.log('[RustParser] parse() called, code length:', code.length);
         const blocks = [];
         
         try {
             // Parse top-level constructs
+            console.log('[RustParser] Parsing use statements...');
             const useBlocks = this.parseUseStatements(code);
+            console.log('[RustParser] Found', useBlocks.length, 'use statements');
+            
+            console.log('[RustParser] Parsing functions...');
             const functionBlocks = this.parseFunctions(code);
+            console.log('[RustParser] Found', functionBlocks.length, 'functions');
+            
+            console.log('[RustParser] Parsing impls...');
             const implBlocks = this.parseImpls(code);
+            console.log('[RustParser] Found', implBlocks.length, 'impls');
+            
+            console.log('[RustParser] Parsing structs...');
             const structBlocks = this.parseStructs(code);
+            console.log('[RustParser] Found', structBlocks.length, 'structs');
             
             blocks.push(...useBlocks);
             blocks.push(...functionBlocks);
             blocks.push(...implBlocks);
             blocks.push(...structBlocks);
             
-            console.log(`[RustParser] Parsed ${useBlocks.length} use statements, ${functionBlocks.length} functions, ${implBlocks.length} impls, ${structBlocks.length} structs`);
+            console.log(`[RustParser] Total parsed: ${blocks.length} blocks`);
             
             // If no blocks were parsed, create a comment block with the code
             if (blocks.length === 0) {
@@ -574,8 +585,11 @@ class RustParser {
         const functions = [];
         const fnRegex = /(pub\s+)?fn\s+(\w+)\s*\(([^)]*)\)(?:\s*->\s*([^{]+))?\s*\{/g;
         let match;
+        let matchCount = 0;
+        const MAX_MATCHES = 100; // Prevent infinite loops
         
-        while ((match = fnRegex.exec(code)) !== null) {
+        while ((match = fnRegex.exec(code)) !== null && matchCount < MAX_MATCHES) {
+            matchCount++;
             const visibility = match[1] ? match[1].trim() : '';
             const name = match[2];
             const params = match[3].trim();
@@ -601,7 +615,7 @@ class RustParser {
             }
         }
         
-        console.log(`[RustParser] extractFunctions returning ${functions.length} functions`);
+        console.log(`[RustParser] extractFunctions returning ${functions.length} functions (${matchCount} matches processed)`);
         return functions;
     }
     
@@ -1087,28 +1101,10 @@ class BevyParser {
         return blocks;
     }
     
-    // Parse statements (reuse Rust parser logic)
+    // Parse statements (delegate to Rust parser)
     parseStatements(code) {
-        const statements = [];
-        const lines = code.split('\n').map(l => l.trim()).filter(l => l);
-        
-        for (let line of lines) {
-            try {
-                if (line.endsWith(';')) {
-                    statements.push({
-                        type: 'bevy_expr_stmt',
-                        id: this.parent.generateBlockId(),
-                        values: {
-                            EXPR: this.parent.createTextBlock(line.slice(0, -1))
-                        }
-                    });
-                }
-            } catch (error) {
-                this.parent.addError(`Bevy statement parse error: ${error.message}`, 0, 0);
-            }
-        }
-        
-        return statements;
+        // Bevy code is just Rust code, so use the Rust parser
+        return this.parent.rustParser.parseStatements(code);
     }
 }
 
@@ -1145,7 +1141,7 @@ class BiospheresParser {
         
         while ((match = useRegex.exec(code)) !== null) {
             blocks.push({
-                type: 'bio_use',
+                type: 'rust_use',
                 id: this.parent.generateBlockId(),
                 fields: {
                     PATH: match[1].trim()
@@ -1167,7 +1163,7 @@ class BiospheresParser {
             const name = match[1];
             if (name.includes('Cell') || name.includes('Type') || code.substring(0, match.index).includes('cell')) {
                 blocks.push({
-                    type: 'bio_cell_type_component',
+                    type: 'bevy_derive_component',
                     id: this.parent.generateBlockId(),
                     fields: {
                         NAME: name
@@ -1199,7 +1195,7 @@ class BiospheresParser {
                 body.includes('Genome') || body.includes('AdhesionZone')) {
                 
                 blocks.push({
-                    type: 'bio_cell_behavior_system',
+                    type: 'bevy_system',
                     id: this.parent.generateBlockId(),
                     fields: {
                         NAME: match[1]
@@ -1226,13 +1222,9 @@ class BiospheresParser {
         let match;
         
         while ((match = genomeRegex.exec(code)) !== null) {
-            blocks.push({
-                type: 'bio_genome_operation',
-                id: this.parent.generateBlockId(),
-                values: {
-                    OPERATION: this.parent.createTextBlock(match[0])
-                }
-            });
+            // Parse as a generic Rust statement
+            const statements = this.parent.rustParser.parseStatements(match[0]);
+            blocks.push(...statements);
         }
         
         return blocks;
@@ -1253,13 +1245,14 @@ class BiospheresParser {
                 } else if (line.includes('apply_thrust') || line.includes('forces.force')) {
                     statements.push(this.parseApplyThrust(line));
                 } else if (line.endsWith(';')) {
-                    statements.push({
-                        type: 'bio_expr_stmt',
-                        id: this.parent.generateBlockId(),
-                        values: {
-                            EXPR: this.parent.createTextBlock(line.slice(0, -1))
-                        }
-                    });
+                    // Parse as generic Rust statement
+                    const parsed = this.parent.rustParser.parseStatements(line);
+                    if (parsed.length > 0) {
+                        statements.push(...parsed);
+                    } else {
+                        // Fallback to text block if can't parse
+                        statements.push(this.parent.createTextBlock(line));
+                    }
                 }
             } catch (error) {
                 this.parent.addError(`Biospheres statement parse error: ${error.message}`, 0, 0);
@@ -1271,56 +1264,30 @@ class BiospheresParser {
     
     // Parse emit_signal operation
     parseEmitSignal(line) {
-        const match = line.match(/emit_signal\(([^,]+),\s*SignalChannel::(\w+),\s*([^,]+),\s*([^)]+)\);/);
-        if (match) {
-            return {
-                type: 'bio_emit_signal',
-                id: this.parent.generateBlockId(),
-                fields: {
-                    CHANNEL: match[2]
-                },
-                values: {
-                    ENTITY: this.parent.createTextBlock(match[1].trim()),
-                    VALUE: this.parent.createTextBlock(match[3].trim()),
-                    RANGE: this.parent.createTextBlock(match[4].trim())
-                }
-            };
+        // Parse as a function call
+        const parsed = this.parent.rustParser.parseStatements(line);
+        if (parsed.length > 0) {
+            return parsed[0];
         }
         return this.parent.createTextBlock(line);
     }
     
     // Parse contract_adhesions operation
     parseContractAdhesions(line) {
-        const match = line.match(/contract_adhesions\(([^,]+),\s*AdhesionZone::(\w+),\s*([^,]+),\s*([^)]+)\);/);
-        if (match) {
-            return {
-                type: 'bio_contract_adhesions',
-                id: this.parent.generateBlockId(),
-                fields: {
-                    ZONE: match[2]
-                },
-                values: {
-                    ENTITY: this.parent.createTextBlock(match[1].trim()),
-                    PERCENT: this.parent.createTextBlock(match[3].trim()),
-                    SPEED: this.parent.createTextBlock(match[4].trim())
-                }
-            };
+        // Parse as a function call
+        const parsed = this.parent.rustParser.parseStatements(line);
+        if (parsed.length > 0) {
+            return parsed[0];
         }
         return this.parent.createTextBlock(line);
     }
     
     // Parse apply_thrust operation
     parseApplyThrust(line) {
-        const match = line.match(/forces\.force\s*\+=\s*(.+?)\s*\*\s*([^;]+);/);
-        if (match) {
-            return {
-                type: 'bio_apply_thrust',
-                id: this.parent.generateBlockId(),
-                values: {
-                    DIRECTION: this.parent.createTextBlock(match[1].trim()),
-                    FORCE: this.parent.createTextBlock(match[2].trim())
-                }
-            };
+        // Parse as an assignment/expression
+        const parsed = this.parent.rustParser.parseStatements(line);
+        if (parsed.length > 0) {
+            return parsed[0];
         }
         return this.parent.createTextBlock(line);
     }

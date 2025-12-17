@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2024-12-17
+
+### Fixed
+- Code importer now correctly handles Biospheres code as Rust/Bevy instead of creating undefined block types
+- BiospheresParser disabled in mixed-mode parsing since Biospheres is just Rust with Bevy ECS
+- Code importer now filters out undefined block types to prevent import errors
+- All imported blocks now use valid, existing block definitions (rust_use, bevy_derive_component, bevy_system)
+
+### Added
+- Debug mode enabled by default for better troubleshooting
+- Comprehensive logging throughout code import process
+- Block type validation before XML generation
+- Safeguards against infinite loops in function extraction (max 100 matches)
+
+### Changed
+- BiospheresParser now delegates to RustParser for proper code parsing
+- Mixed-mode parser priority: Bevy > WGSL > Rust (removed Biospheres as separate mode)
+
 ## [0.2.1] - 2024-12-17
 
 ### Fixed

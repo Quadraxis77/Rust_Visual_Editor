@@ -71,9 +71,9 @@ During initial development (0.x.x):
    cargo publish
    ```
 
-## Current Version: 0.2.1
+## Current Version: 0.2.2
 
-This version adds comprehensive game development blocks (100+ blocks) for Bevy game engine with complete, working implementations and auto-generated components. The API is not yet stable.
+This version fixes the code importer to correctly handle Biospheres code as Rust/Bevy, preventing undefined block type errors. Debug mode is now enabled by default for better troubleshooting. The API is not yet stable.
 
 ## Planned Milestones
 

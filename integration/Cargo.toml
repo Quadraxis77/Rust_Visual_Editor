@@ -1,6 +1,6 @@
 [package]
 name = "blockly-rust-compiler"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 authors = ["Quadraxis77 <Quadraxis77@gmail.com>"]
 description = "Rust compiler integration library for visual programming with Blockly - validate and check generated code"
