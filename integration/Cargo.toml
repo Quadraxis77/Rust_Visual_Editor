@@ -2,11 +2,11 @@
 name = "blockly-rust-compiler"
 version = "0.1.0"
 edition = "2021"
-authors = ["Blockly Rust Editor Contributors"]
-description = "Rust compilation checking service for Blockly visual editor"
+authors = ["Quadraxis77 <Quadraxis77@gmail.com>"]
+description = "Rust compiler integration library for visual programming with Blockly - validate and check generated code"
 license = "Apache-2.0"
-repository = "https://github.com/yourusername/rust-visual-editor"
-homepage = "https://github.com/yourusername/rust-visual-editor"
+repository = "https://github.com/Quadraxis77/Rust_Visual_Editor"
+homepage = "https://github.com/Quadraxis77/Rust_Visual_Editor"
 documentation = "https://docs.rs/blockly-rust-compiler"
 readme = "../README.md"
 keywords = ["blockly", "visual-programming", "rust-compiler", "code-generation"]
