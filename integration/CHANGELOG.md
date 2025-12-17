@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2024-12-17
+
+### Fixed
+- Reduced package size by excluding target directory and documentation files
+- Updated repository URLs to correct GitHub location
+
 ## [0.1.0] - 2024-12-17
 
 ### Added
@@ -25,5 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `cli`: Command-line interface for standalone usage
 - `full`: All features enabled
 
-[Unreleased]: https://github.com/Quadraxis77/Rust_Visual_Editor/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Quadraxis77/Rust_Visual_Editor/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Quadraxis77/Rust_Visual_Editor/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Quadraxis77/Rust_Visual_Editor/releases/tag/v0.1.0

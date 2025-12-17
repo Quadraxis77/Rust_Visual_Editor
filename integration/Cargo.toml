@@ -1,6 +1,6 @@
 [package]
 name = "blockly-rust-compiler"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Quadraxis77 <Quadraxis77@gmail.com>"]
 description = "Rust compiler integration library for visual programming with Blockly - validate and check generated code"
@@ -11,6 +11,7 @@ documentation = "https://docs.rs/blockly-rust-compiler"
 readme = "../README.md"
 keywords = ["blockly", "visual-programming", "rust-compiler", "code-generation"]
 categories = ["development-tools", "compilers", "web-programming"]
+exclude = ["target/", ".vscode/", "PUBLISHING.md", "VERSIONING.md"]
 
 [[bin]]
 name = "rust-compiler-service"
